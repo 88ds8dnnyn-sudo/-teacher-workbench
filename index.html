@@ -1,0 +1,1230 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>教师工作台</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#4f6ef7">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="教师工作台">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<style>
+:root{
+  --pri:#7d8ca3;--pri2:#a9b4c0;--bg:#f3f0ea;--card:#fdfcf9;--txt:#4a4a4a;--mut:#8b8b84;
+  --bor:#e5dfd3;--red:#c0877f;--yel:#c9a86a;--grn:#9aa889;--blue:#8fa3b0;
+  --sh:0 4px 16px rgba(125,140,163,.10);
+  /* 马卡龙学科色 */
+  --c-yw:#e8d5d5;--c-sx:#c3cedc;--c-yy:#e6d5b8;--c-kx:#c6d0bd;--c-ty:#d5cfe0;--c-ms:#d0d8e4;--c-dy:#e5cfc4;--c-bh:#bfd3d6;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{font-family:"PingFang SC","Microsoft YaHei",system-ui,sans-serif;background:var(--bg);color:var(--txt);font-size:14px}
+.app{display:flex;min-height:100vh}
+/* 侧边栏 */
+.side{width:88px;background:rgba(255,255,255,.85);backdrop-filter:blur(6px);border-right:1px solid var(--bor);padding:14px 8px 70px;display:flex;flex-direction:column;gap:4px;position:fixed;top:0;bottom:0;left:0;z-index:50;overflow-y:auto}
+.side .logo{text-align:center;font-size:11px;font-weight:600;color:var(--mut);padding:4px 0 12px;border-bottom:1px solid var(--bor);margin-bottom:6px}
+.side .logo b{display:block;font-size:20px;margin-bottom:2px;background:linear-gradient(135deg,var(--pri),#b38bf0);-webkit-background-clip:text;background-clip:text;color:transparent}
+.side .tab{display:flex;flex-direction:column;align-items:center;gap:4px;padding:9px 4px;border-radius:12px;cursor:pointer;font-size:11px;transition:.2s;color:var(--mut)}
+.side .tab svg{width:20px;height:20px}
+.side .tab.active{background:#ece7dd;color:var(--pri);font-weight:600}
+.side .tab:hover{background:#f1ede4;color:var(--pri)}
+/* 主区 */
+.main{flex:1;margin-left:88px;padding:14px 18px 90px;max-width:1100px}
+.topbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;background:linear-gradient(135deg,#eae4d8,#f7f3eb);border:1px solid var(--bor);border-radius:18px;padding:14px 18px;margin-bottom:16px;box-shadow:var(--sh);position:relative;overflow:hidden}
+.topbar::before{content:'';position:absolute;right:-40px;top:-40px;width:170px;height:170px;border-radius:50%;background:radial-gradient(circle,rgba(157,138,116,.16),transparent 70%);pointer-events:none}
+.topbar .cls{display:flex;align-items:center;gap:8px;font-size:19px;font-weight:800;color:var(--pri);letter-spacing:.5px;position:relative;z-index:1}
+.topbar .cls::before{content:'🏫';font-size:18px}
+.topbar .cls input{font-size:17px;font-weight:800;color:var(--pri);border:none;border-bottom:2px dashed rgba(125,140,163,.4);width:132px;background:transparent;padding:2px 4px;border-radius:0}
+.topbar .dt{font-size:13px;color:var(--mut);margin-left:auto;text-align:right;position:relative;z-index:1}
+.topbar .dt b{display:block;font-size:15px;color:var(--txt)}
+.classes-sel{font-size:13px;border-radius:10px;background:#fffdf8;padding:6px 10px;border-color:#d8d0c2}
+.top-acts{display:flex;flex-wrap:wrap;gap:6px;align-items:center;position:relative;z-index:1}
+.top-acts .btn{border-radius:999px;padding:5px 13px;font-size:12px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.top-acts .btn.ghost{background:rgba(255,255,255,.75);border:1px solid #ddd5c8;color:#5d5d57}
+.top-acts .btn.ghost:hover{background:#fff;border-color:#c9beb0}
+.panel{display:none}
+.panel.active{display:block}
+.card{background:var(--card);border:1px solid var(--bor);border-radius:18px;box-shadow:var(--sh);padding:16px;margin-bottom:14px}
+.card h3{font-size:15px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.card h3 .ico{color:var(--pri)}
+/* 卡片折叠 */
+.card.foldable h3{cursor:pointer;user-select:none;flex-wrap:wrap;line-height:1.5}
+.card.foldable h3:hover .fold-ico{color:var(--pri)}
+.card.foldable .fold-ico{margin-left:auto;font-size:12px;color:var(--mut);transition:.2s;flex-shrink:0}
+.card.foldable.folded h3 .fold-ico{transform:rotate(-90deg)}
+.card.foldable.folded h3~*{display:none}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+input,select,textarea{font-family:inherit;font-size:14px;padding:7px 10px;border:1px solid var(--bor);border-radius:8px;outline:none;background:#fff;color:var(--txt)}
+input:focus,select:focus,textarea:focus{border-color:var(--pri)}
+textarea{width:100%;min-height:70px;resize:vertical}
+.btn{background:var(--pri);color:#fff;border:none;padding:8px 14px;border-radius:10px;cursor:pointer;font-size:13px;transition:.2s;box-shadow:0 2px 6px rgba(125,140,163,.18)}
+.btn:hover{filter:brightness(1.1)}
+.btn.ghost{background:#fff;border:1px solid var(--bor);color:var(--txt);box-shadow:none}
+.btn.danger{background:var(--red)}
+.danger-text{color:#b04a4a !important}
+.btn.green{background:var(--grn)}
+.btn.sm{padding:4px 9px;font-size:12px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--bor);vertical-align:top}
+th{background:#f4f1ea;color:var(--mut);font-weight:600;white-space:nowrap}
+tr:hover td{background:#f7f4ee}
+.grid{display:grid;gap:10px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.tag{display:inline-block;padding:2px 9px;border-radius:12px;font-size:12px;margin:1px}
+.tag.red{background:#f4e6e2;color:#9c6b64}
+.tag.yellow{background:#efe6d5;color:#8a7350}
+.tag.green{background:#e7ecdf;color:#6b7861}
+.tag.blue{background:#e7e6de;color:#5f6d7c}
+.tag.gray{background:#eae6de;color:#7c766c}
+.card-tt{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+.card-tt h3{margin:0}
+.todo-add{display:flex;gap:8px;margin-bottom:10px}
+.todo-add input{flex:1;border:1px solid var(--bor);border-radius:10px;padding:8px 10px;font-size:14px;outline:none;background:#fff;color:var(--txt)}
+.todo-add select{border:1px solid var(--bor);border-radius:10px;padding:7px 6px;font-size:13px;background:#fff;color:var(--txt);max-width:110px}
+.todo-item .txt{flex:1;word-break:break-word}
+.todo-tag{display:inline-block;font-size:11px;padding:1px 8px;border-radius:20px;background:#ece7dd;color:var(--pri);cursor:pointer;margin-right:6px;vertical-align:1px}
+#toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:rgba(30,32,45,.82);color:#fff;padding:10px 16px;border-radius:20px;font-size:13px;z-index:999;opacity:0;pointer-events:none;transition:.25s;max-width:86vw;text-align:center}
+#toast.show{opacity:1}
+.mnav{display:none;position:fixed;left:0;right:0;bottom:0;z-index:60;background:rgba(255,255,255,.97);backdrop-filter:blur(8px);border-top:1px solid var(--bor);padding:6px 4px calc(6px + env(safe-area-inset-bottom));justify-content:space-around}
+.mnav .tab{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;color:var(--mut);padding:5px 2px;border-radius:10px;flex:1;cursor:pointer;user-select:none}
+.mnav .tab svg{width:20px;height:20px}
+.mnav .tab.active{color:var(--pri);font-weight:600;background:#ece7dd}
+/* 首页问候卡 */
+.hero-card{background:linear-gradient(135deg,#e9e3d8,#f4f0e8);border:1px solid var(--bor);padding:18px 20px}
+.hero-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.hero-greet{font-size:22px;font-weight:700;color:var(--txt)}
+.hero-sub{font-size:13px;color:var(--mut);margin-top:6px}
+.hero-sub b{color:var(--pri)}
+.hero-date{font-size:13px;color:var(--mut);text-align:right;line-height:1.6}
+.hero-note{display:flex;align-items:center;gap:10px;margin-top:14px;background:#fff;border:1px solid var(--bor);border-radius:12px;padding:8px 12px}
+.hero-note .hn-lab{font-size:12px;color:var(--mut);white-space:nowrap}
+.hero-note input{flex:1;border:none;outline:none;background:transparent;font-size:14px;color:var(--txt);min-width:120px}
+.stat-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat{background:var(--card);border:1px solid var(--bor);border-radius:14px;padding:12px 6px;text-align:center;box-shadow:0 2px 8px rgba(125,140,163,.06)}
+.stat b{display:block;font-size:22px;color:var(--pri);margin-top:4px}
+.stat .lb{font-size:12px;color:var(--mut)}
+.todo-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid var(--bor);border-radius:10px;margin-bottom:8px;background:#fff;cursor:pointer}
+.todo-item .cb{width:20px;height:20px;border:2px solid var(--bor);border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff}
+.todo-item.done .cb{background:var(--grn);border-color:var(--grn)}
+.todo-item.done span{text-decoration:line-through;color:var(--mut)}
+.bar-wrap{background:#ece7dd;border-radius:8px;height:18px;overflow:hidden;position:relative}
+.bar{height:100%;border-radius:8px;transition:.4s}
+.bar.g{background:var(--grn)}.bar.y{background:var(--yel)}.bar.r{background:var(--red)}.bar.b{background:var(--blue)}
+.seat-grid{display:grid;gap:8px;padding:10px;background:#efe9de;border:1px dashed #d8d0c2;border-radius:12px}
+.seat{background:#fff;border:1px solid var(--bor);border-radius:8px;padding:10px;text-align:center;font-size:13px;min-height:44px;display:flex;align-items:center;justify-content:center;cursor:grab;user-select:none;transition:.2s}
+.seat:hover{border-color:var(--pri);box-shadow:0 2px 8px rgba(79,110,247,.15)}
+.seat.drag{opacity:.4}
+.seat.empty{background:#f0ede6;color:var(--mut);font-size:12px}
+.seat-wrap{display:flex;gap:8px;align-items:stretch}
+.seat-main{flex:1;min-width:0}
+.seat-stage{background:#f0e2c8;border:1px solid #d9c48e;border-radius:10px;padding:8px;text-align:center;font-size:14px;font-weight:700;color:#8a7350;margin-bottom:8px}
+.seat-door{width:34px;display:flex;align-items:center;justify-content:center;writing-mode:vertical-rl;font-size:13px;font-weight:700;background:#e4e9ef;border:1px solid #b7c3d4;border-radius:10px;color:#5f6d7c;flex-shrink:0}
+.seat-name{line-height:1.2}
+.seat-h{font-size:10px;color:var(--mut);margin-top:2px}
+.seat .seat-h{display:block}
+.note{background:#fbf7ef;border:1px solid #ead9b2;border-radius:10px;padding:12px;margin-bottom:10px;font-size:13px;position:relative}
+.note .date{color:var(--mut);font-size:12px}
+.bar-chart{display:flex;align-items:flex-end;gap:6px;height:130px;padding:8px 4px;border-bottom:1px solid var(--bor)}
+.bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;color:var(--mut)}
+.bar-col .v{height:var(--h);width:100%;max-width:34px;background:var(--pri);border-radius:5px 5px 0 0;display:flex;align-items:flex-start;justify-content:center;color:#fff;font-size:10px;padding-top:2px}
+.grp{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:20px;color:#fff;font-size:13px;margin:3px}
+.stu-pill{display:inline-block;padding:3px 10px;border-radius:14px;margin:3px;font-size:13px;background:#eef1f8;color:var(--txt)}
+.stu-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:10px;margin-top:6px}
+.stu-card{position:relative;border:2px solid #ddd5c8;border-radius:12px;padding:13px 6px 11px;text-align:center;background:var(--card);box-shadow:0 2px 6px rgba(0,0,0,.04);transition:.2s}
+.stu-card:hover{border-color:#c4b8a6;transform:translateY(-1px);box-shadow:0 4px 10px rgba(125,140,163,.12)}
+.stu-card .no{position:absolute;top:-9px;left:-9px;min-width:22px;height:22px;line-height:22px;font-size:12px;font-weight:600;background:var(--main,#7d8ca3);color:#fff;border-radius:11px;padding:0 6px}
+.stu-card .nm{font-size:17px;font-weight:600;color:var(--txt);word-break:break-all;line-height:1.3}
+.stu-card .sx{font-size:11px;color:var(--mut);margin-top:3px}
+.duty-group{border:1px solid #e3ded3;border-radius:10px;padding:8px 10px;margin:8px 0;background:#f7f4ee}
+.duty-group b{color:var(--main,#4f6ef7)}
+.schedule-table td{text-align:center;font-size:12px}
+.photo{max-width:120px;border-radius:8px;margin-top:6px;display:block}
+.avatar{width:38px;height:38px;border-radius:50%;object-fit:cover;cursor:zoom-in;border:2px solid var(--bor)}
+.photo-lg{max-width:100%;border-radius:8px;margin-top:6px}
+.import-hint{font-size:12px;color:var(--mut);margin-top:4px}
+.footer-note{text-align:center;color:var(--mut);font-size:12px;padding:14px 0}
+/* 考勤登记 · 流程式 */
+.att-flow{background:#f7f4ee;border:1px solid var(--bor);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:10px}
+.att-step{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.step-no{width:22px;height:22px;border-radius:50%;background:var(--pri);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.step-lab{font-size:13px;color:var(--mut);white-space:nowrap}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg-btn{border:1px solid var(--bor);background:#fff;border-radius:999px;padding:6px 14px;font-size:13px;cursor:pointer;transition:.2s;color:var(--txt)}
+.seg-btn:hover{border-color:#c4b8a6}
+.seg-btn.on{background:var(--pri);border-color:var(--pri);color:#fff}
+.seg-btn.hot{background:#f3ece4;border-color:#d8c9b8;color:#9c6b5a}
+.seg-btn.hot.on{background:var(--yel);border-color:var(--yel);color:#fff}
+.att-reg{display:flex;align-items:center;gap:6px;padding:6px 8px;border:1px solid var(--bor);border-radius:10px;margin-bottom:6px;background:#fff;font-size:13px;flex-wrap:wrap}
+.att-reg .btn{margin-left:auto}
+.muted-sm{font-size:12px;color:var(--mut)}
+/* 手机端 */
+@media(max-width:640px){
+  .side{display:none}
+  .side .tab{font-size:10px;padding:8px 2px}
+  .side .logo b{font-size:15px}
+  .main{margin-left:0;padding:10px 12px 84px;max-width:100%}
+  .topbar{padding:10px 12px}
+  .topbar .cls{font-size:17px}
+  .top-acts{width:100%;margin-top:2px}
+  .top-acts .btn{font-size:12px}
+  .topbar .dt{margin-left:0;width:100%;text-align:left}
+  .stat-cards{grid-template-columns:repeat(3,1fr)}
+  .stat{font-size:12px}
+  .stat b{font-size:18px}
+  th,td{padding:6px;font-size:12px}
+  input,select,textarea{font-size:13px}
+  .mnav{display:flex}
+  .hero-card{padding:14px}
+  .hero-note{flex-direction:column;align-items:stretch;gap:6px}
+  .hero-note .hn-lab{white-space:normal}
+  .grid.g2{grid-template-columns:1fr}
+  .todo-add{flex-wrap:wrap}
+  .todo-add input{flex:1 1 100%}
+  .todo-add select{flex:1;max-width:none}
+  .card{padding:12px}
+}
+</style>
+<script>
+/* pako 2.1.0 inflate-only (MIT AND Zlib) https://github.com/nodeca/pako */
+/*! pako 2.1.0 https://github.com/nodeca/pako @license (MIT AND Zlib) */
+!function(e,t){"object"==typeof exports&&"undefined"!=typeof module?t(exports):"function"==typeof define&&define.amd?define(["exports"],t):t((e="undefined"!=typeof globalThis?globalThis:e||self).pako={})}(this,(function(e){"use strict";var t=(e,t,i,n)=>{let a=65535&e|0,r=e>>>16&65535|0,o=0;for(;0!==i;){o=i>2e3?2e3:i,i-=o;do{a=a+t[n++]|0,r=r+a|0}while(--o);a%=65521,r%=65521}return a|r<<16|0};const i=new Uint32Array((()=>{let e,t=[];for(var i=0;i<256;i++){e=i;for(var n=0;n<8;n++)e=1&e?3988292384^e>>>1:e>>>1;t[i]=e}return t})());var n=(e,t,n,a)=>{const r=i,o=a+n;e^=-1;for(let i=a;i<o;i++)e=e>>>8^r[255&(e^t[i])];return-1^e};const a=16209;var r=function(e,t){let i,n,r,o,s,l,d,f,c,h,u,w,b,m,k,_,g,p,v,x,y,E,R,A;const Z=e.state;i=e.next_in,R=e.input,n=i+(e.avail_in-5),r=e.next_out,A=e.output,o=r-(t-e.avail_out),s=r+(e.avail_out-257),l=Z.dmax,d=Z.wsize,f=Z.whave,c=Z.wnext,h=Z.window,u=Z.hold,w=Z.bits,b=Z.lencode,m=Z.distcode,k=(1<<Z.lenbits)-1,_=(1<<Z.distbits)-1;e:do{w<15&&(u+=R[i++]<<w,w+=8,u+=R[i++]<<w,w+=8),g=b[u&k];t:for(;;){if(p=g>>>24,u>>>=p,w-=p,p=g>>>16&255,0===p)A[r++]=65535&g;else{if(!(16&p)){if(0==(64&p)){g=b[(65535&g)+(u&(1<<p)-1)];continue t}if(32&p){Z.mode=16191;break e}e.msg="invalid literal/length code",Z.mode=a;break e}v=65535&g,p&=15,p&&(w<p&&(u+=R[i++]<<w,w+=8),v+=u&(1<<p)-1,u>>>=p,w-=p),w<15&&(u+=R[i++]<<w,w+=8,u+=R[i++]<<w,w+=8),g=m[u&_];i:for(;;){if(p=g>>>24,u>>>=p,w-=p,p=g>>>16&255,!(16&p)){if(0==(64&p)){g=m[(65535&g)+(u&(1<<p)-1)];continue i}e.msg="invalid distance code",Z.mode=a;break e}if(x=65535&g,p&=15,w<p&&(u+=R[i++]<<w,w+=8,w<p&&(u+=R[i++]<<w,w+=8)),x+=u&(1<<p)-1,x>l){e.msg="invalid distance too far back",Z.mode=a;break e}if(u>>>=p,w-=p,p=r-o,x>p){if(p=x-p,p>f&&Z.sane){e.msg="invalid distance too far back",Z.mode=a;break e}if(y=0,E=h,0===c){if(y+=d-p,p<v){v-=p;do{A[r++]=h[y++]}while(--p);y=r-x,E=A}}else if(c<p){if(y+=d+c-p,p-=c,p<v){v-=p;do{A[r++]=h[y++]}while(--p);if(y=0,c<v){p=c,v-=p;do{A[r++]=h[y++]}while(--p);y=r-x,E=A}}}else if(y+=c-p,p<v){v-=p;do{A[r++]=h[y++]}while(--p);y=r-x,E=A}for(;v>2;)A[r++]=E[y++],A[r++]=E[y++],A[r++]=E[y++],v-=3;v&&(A[r++]=E[y++],v>1&&(A[r++]=E[y++]))}else{y=r-x;do{A[r++]=A[y++],A[r++]=A[y++],A[r++]=A[y++],v-=3}while(v>2);v&&(A[r++]=A[y++],v>1&&(A[r++]=A[y++]))}break}}break}}while(i<n&&r<s);v=w>>3,i-=v,w-=v<<3,u&=(1<<w)-1,e.next_in=i,e.next_out=r,e.avail_in=i<n?n-i+5:5-(i-n),e.avail_out=r<s?s-r+257:257-(r-s),Z.hold=u,Z.bits=w};const o=15,s=new Uint16Array([3,4,5,6,7,8,9,10,11,13,15,17,19,23,27,31,35,43,51,59,67,83,99,115,131,163,195,227,258,0,0]),l=new Uint8Array([16,16,16,16,16,16,16,16,17,17,17,17,18,18,18,18,19,19,19,19,20,20,20,20,21,21,21,21,16,72,78]),d=new Uint16Array([1,2,3,4,5,7,9,13,17,25,33,49,65,97,129,193,257,385,513,769,1025,1537,2049,3073,4097,6145,8193,12289,16385,24577,0,0]),f=new Uint8Array([16,16,16,16,17,17,18,18,19,19,20,20,21,21,22,22,23,23,24,24,25,25,26,26,27,27,28,28,29,29,64,64]);var c=(e,t,i,n,a,r,c,h)=>{const u=h.bits;let w,b,m,k,_,g,p=0,v=0,x=0,y=0,E=0,R=0,A=0,Z=0,S=0,T=0,O=null;const U=new Uint16Array(16),D=new Uint16Array(16);let I,B,N,C=null;for(p=0;p<=o;p++)U[p]=0;for(v=0;v<n;v++)U[t[i+v]]++;for(E=u,y=o;y>=1&&0===U[y];y--);if(E>y&&(E=y),0===y)return a[r++]=20971520,a[r++]=20971520,h.bits=1,0;for(x=1;x<y&&0===U[x];x++);for(E<x&&(E=x),Z=1,p=1;p<=o;p++)if(Z<<=1,Z-=U[p],Z<0)return-1;if(Z>0&&(0===e||1!==y))return-1;for(D[1]=0,p=1;p<o;p++)D[p+1]=D[p]+U[p];for(v=0;v<n;v++)0!==t[i+v]&&(c[D[t[i+v]]++]=v);if(0===e?(O=C=c,g=20):1===e?(O=s,C=l,g=257):(O=d,C=f,g=0),T=0,v=0,p=x,_=r,R=E,A=0,m=-1,S=1<<E,k=S-1,1===e&&S>852||2===e&&S>592)return 1;for(;;){I=p-A,c[v]+1<g?(B=0,N=c[v]):c[v]>=g?(B=C[c[v]-g],N=O[c[v]-g]):(B=96,N=0),w=1<<p-A,b=1<<R,x=b;do{b-=w,a[_+(T>>A)+b]=I<<24|B<<16|N|0}while(0!==b);for(w=1<<p-1;T&w;)w>>=1;if(0!==w?(T&=w-1,T+=w):T=0,v++,0==--U[p]){if(p===y)break;p=t[i+c[v]]}if(p>E&&(T&k)!==m){for(0===A&&(A=E),_+=x,R=p-A,Z=1<<R;R+A<y&&(Z-=U[R+A],!(Z<=0));)R++,Z<<=1;if(S+=1<<R,1===e&&S>852||2===e&&S>592)return 1;m=T&k,a[m]=E<<24|R<<16|_-r|0}}return 0!==T&&(a[_+T]=p-A<<24|64<<16|0),h.bits=E,0},h={Z_NO_FLUSH:0,Z_PARTIAL_FLUSH:1,Z_SYNC_FLUSH:2,Z_FULL_FLUSH:3,Z_FINISH:4,Z_BLOCK:5,Z_TREES:6,Z_OK:0,Z_STREAM_END:1,Z_NEED_DICT:2,Z_ERRNO:-1,Z_STREAM_ERROR:-2,Z_DATA_ERROR:-3,Z_MEM_ERROR:-4,Z_BUF_ERROR:-5,Z_NO_COMPRESSION:0,Z_BEST_SPEED:1,Z_BEST_COMPRESSION:9,Z_DEFAULT_COMPRESSION:-1,Z_FILTERED:1,Z_HUFFMAN_ONLY:2,Z_RLE:3,Z_FIXED:4,Z_DEFAULT_STRATEGY:0,Z_BINARY:0,Z_TEXT:1,Z_UNKNOWN:2,Z_DEFLATED:8};const{Z_FINISH:u,Z_BLOCK:w,Z_TREES:b,Z_OK:m,Z_STREAM_END:k,Z_NEED_DICT:_,Z_STREAM_ERROR:g,Z_DATA_ERROR:p,Z_MEM_ERROR:v,Z_BUF_ERROR:x,Z_DEFLATED:y}=h,E=16180,R=16190,A=16191,Z=16192,S=16194,T=16199,O=16200,U=16206,D=16209,I=e=>(e>>>24&255)+(e>>>8&65280)+((65280&e)<<8)+((255&e)<<24);function B(){this.strm=null,this.mode=0,this.last=!1,this.wrap=0,this.havedict=!1,this.flags=0,this.dmax=0,this.check=0,this.total=0,this.head=null,this.wbits=0,this.wsize=0,this.whave=0,this.wnext=0,this.window=null,this.hold=0,this.bits=0,this.length=0,this.offset=0,this.extra=0,this.lencode=null,this.distcode=null,this.lenbits=0,this.distbits=0,this.ncode=0,this.nlen=0,this.ndist=0,this.have=0,this.next=null,this.lens=new Uint16Array(320),this.work=new Uint16Array(288),this.lendyn=null,this.distdyn=null,this.sane=0,this.back=0,this.was=0}const N=e=>{if(!e)return 1;const t=e.state;return!t||t.strm!==e||t.mode<E||t.mode>16211?1:0},C=e=>{if(N(e))return g;const t=e.state;return e.total_in=e.total_out=t.total=0,e.msg="",t.wrap&&(e.adler=1&t.wrap),t.mode=E,t.last=0,t.havedict=0,t.flags=-1,t.dmax=32768,t.head=null,t.hold=0,t.bits=0,t.lencode=t.lendyn=new Int32Array(852),t.distcode=t.distdyn=new Int32Array(592),t.sane=1,t.back=-1,m},z=e=>{if(N(e))return g;const t=e.state;return t.wsize=0,t.whave=0,t.wnext=0,C(e)},F=(e,t)=>{let i;if(N(e))return g;const n=e.state;return t<0?(i=0,t=-t):(i=5+(t>>4),t<48&&(t&=15)),t&&(t<8||t>15)?g:(null!==n.window&&n.wbits!==t&&(n.window=null),n.wrap=i,n.wbits=t,z(e))},L=(e,t)=>{if(!e)return g;const i=new B;e.state=i,i.strm=e,i.window=null,i.mode=E;const n=F(e,t);return n!==m&&(e.state=null),n};let M,H,j=!0;const K=e=>{if(j){M=new Int32Array(512),H=new Int32Array(32);let t=0;for(;t<144;)e.lens[t++]=8;for(;t<256;)e.lens[t++]=9;for(;t<280;)e.lens[t++]=7;for(;t<288;)e.lens[t++]=8;for(c(1,e.lens,0,288,M,0,e.work,{bits:9}),t=0;t<32;)e.lens[t++]=5;c(2,e.lens,0,32,H,0,e.work,{bits:5}),j=!1}e.lencode=M,e.lenbits=9,e.distcode=H,e.distbits=5},P=(e,t,i,n)=>{let a;const r=e.state;return null===r.window&&(r.wsize=1<<r.wbits,r.wnext=0,r.whave=0,r.window=new Uint8Array(r.wsize)),n>=r.wsize?(r.window.set(t.subarray(i-r.wsize,i),0),r.wnext=0,r.whave=r.wsize):(a=r.wsize-r.wnext,a>n&&(a=n),r.window.set(t.subarray(i-n,i-n+a),r.wnext),(n-=a)?(r.window.set(t.subarray(i-n,i),0),r.wnext=n,r.whave=r.wsize):(r.wnext+=a,r.wnext===r.wsize&&(r.wnext=0),r.whave<r.wsize&&(r.whave+=a))),0};var Y={inflateReset:z,inflateReset2:F,inflateResetKeep:C,inflateInit:e=>L(e,15),inflateInit2:L,inflate:(e,i)=>{let a,o,s,l,d,f,h,B,C,z,F,L,M,H,j,Y,G,X,W,q,J,Q,V=0;const $=new Uint8Array(4);let ee,te;const ie=new Uint8Array([16,17,18,0,8,7,9,6,10,5,11,4,12,3,13,2,14,1,15]);if(N(e)||!e.output||!e.input&&0!==e.avail_in)return g;a=e.state,a.mode===A&&(a.mode=Z),d=e.next_out,s=e.output,h=e.avail_out,l=e.next_in,o=e.input,f=e.avail_in,B=a.hold,C=a.bits,z=f,F=h,Q=m;e:for(;;)switch(a.mode){case E:if(0===a.wrap){a.mode=Z;break}for(;C<16;){if(0===f)break e;f--,B+=o[l++]<<C,C+=8}if(2&a.wrap&&35615===B){0===a.wbits&&(a.wbits=15),a.check=0,$[0]=255&B,$[1]=B>>>8&255,a.check=n(a.check,$,2,0),B=0,C=0,a.mode=16181;break}if(a.head&&(a.head.done=!1),!(1&a.wrap)||(((255&B)<<8)+(B>>8))%31){e.msg="incorrect header check",a.mode=D;break}if((15&B)!==y){e.msg="unknown compression method",a.mode=D;break}if(B>>>=4,C-=4,J=8+(15&B),0===a.wbits&&(a.wbits=J),J>15||J>a.wbits){e.msg="invalid window size",a.mode=D;break}a.dmax=1<<a.wbits,a.flags=0,e.adler=a.check=1,a.mode=512&B?16189:A,B=0,C=0;break;case 16181:for(;C<16;){if(0===f)break e;f--,B+=o[l++]<<C,C+=8}if(a.flags=B,(255&a.flags)!==y){e.msg="unknown compression method",a.mode=D;break}if(57344&a.flags){e.msg="unknown header flags set",a.mode=D;break}a.head&&(a.head.text=B>>8&1),512&a.flags&&4&a.wrap&&($[0]=255&B,$[1]=B>>>8&255,a.check=n(a.check,$,2,0)),B=0,C=0,a.mode=16182;case 16182:for(;C<32;){if(0===f)break e;f--,B+=o[l++]<<C,C+=8}a.head&&(a.head.time=B),512&a.flags&&4&a.wrap&&($[0]=255&B,$[1]=B>>>8&255,$[2]=B>>>16&255,$[3]=B>>>24&255,a.check=n(a.check,$,4,0)),B=0,C=0,a.mode=16183;case 16183:for(;C<16;){if(0===f)break e;f--,B+=o[l++]<<C,C+=8}a.head&&(a.head.xflags=255&B,a.head.os=B>>8),512&a.flags&&4&a.wrap&&($[0]=255&B,$[1]=B>>>8&255,a.check=n(a.check,$,2,0)),B=0,C=0,a.mode=16184;case 16184:if(1024&a.flags){for(;C<16;){if(0===f)break e;f--,B+=o[l++]<<C,C+=8}a.length=B,a.head&&(a.head.extra_len=B),512&a.flags&&4&a.wrap&&($[0]=255&B,$[1]=B>>>8&255,a.check=n(a.check,$,2,0)),B=0,C=0}else a.head&&(a.head.extra=null);a.mode=16185;case 16185:if(1024&a.flags&&(L=a.length,L>f&&(L=f),L&&(a.head&&(J=a.head.extra_len-a.length,a.head.extra||(a.head.extra=new Uint8Array(a.head.extra_len)),a.head.extra.set(o.subarray(l,l+L),J)),512&a.flags&&4&a.wrap&&(a.check=n(a.check,o,L,l)),f-=L,l+=L,a.length-=L),a.length))break e;a.length=0,a.mode=16186;case 16186:if(2048&a.flags){if(0===f)break e;L=0;do{J=o[l+L++],a.head&&J&&a.length<65536&&(a.head.name+=String.fromCharCode(J))}while(J&&L<f);if(512&a.flags&&4&a.wrap&&(a.check=n(a.check,o,L,l)),f-=L,l+=L,J)break e}else a.head&&(a.head.name=null);a.length=0,a.mode=16187;case 16187:if(4096&a.flags){if(0===f)break e;L=0;do{J=o[l+L++],a.head&&J&&a.length<65536&&(a.head.comment+=String.fromCharCode(J))}while(J&&L<f);if(512&a.flags&&4&a.wrap&&(a.check=n(a.check,o,L,l)),f-=L,l+=L,J)break e}else a.head&&(a.head.comment=null);a.mode=16188;case 16188:if(512&a.flags){for(;C<16;){if(0===f)break e;f--,B+=o[l++]<<C,C+=8}if(4&a.wrap&&B!==(65535&a.check)){e.msg="header crc mismatch",a.mode=D;break}B=0,C=0}a.head&&(a.head.hcrc=a.flags>>9&1,a.head.done=!0),e.adler=a.check=0,a.mode=A;break;case 16189:for(;C<32;){if(0===f)break e;f--,B+=o[l++]<<C,C+=8}e.adler=a.check=I(B),B=0,C=0,a.mode=R;case R:if(0===a.havedict)return e.next_out=d,e.avail_out=h,e.next_in=l,e.avail_in=f,a.hold=B,a.bits=C,_;e.adler=a.check=1,a.mode=A;case A:if(i===w||i===b)break e;case Z:if(a.last){B>>>=7&C,C-=7&C,a.mode=U;break}for(;C<3;){if(0===f)break e;f--,B+=o[l++]<<C,C+=8}switch(a.last=1&B,B>>>=1,C-=1,3&B){case 0:a.mode=16193;break;case 1:if(K(a),a.mode=T,i===b){B>>>=2,C-=2;break e}break;case 2:a.mode=16196;break;case 3:e.msg="invalid block type",a.mode=D}B>>>=2,C-=2;break;case 16193:for(B>>>=7&C,C-=7&C;C<32;){if(0===f)break e;f--,B+=o[l++]<<C,C+=8}if((65535&B)!=(B>>>16^65535)){e.msg="invalid stored block lengths",a.mode=D;break}if(a.length=65535&B,B=0,C=0,a.mode=S,i===b)break e;case S:a.mode=16195;case 16195:if(L=a.length,L){if(L>f&&(L=f),L>h&&(L=h),0===L)break e;s.set(o.subarray(l,l+L),d),f-=L,l+=L,h-=L,d+=L,a.length-=L;break}a.mode=A;break;case 16196:for(;C<14;){if(0===f)break e;f--,B+=o[l++]<<C,C+=8}if(a.nlen=257+(31&B),B>>>=5,C-=5,a.ndist=1+(31&B),B>>>=5,C-=5,a.ncode=4+(15&B),B>>>=4,C-=4,a.nlen>286||a.ndist>30){e.msg="too many length or distance symbols",a.mode=D;break}a.have=0,a.mode=16197;case 16197:for(;a.have<a.ncode;){for(;C<3;){if(0===f)break e;f--,B+=o[l++]<<C,C+=8}a.lens[ie[a.have++]]=7&B,B>>>=3,C-=3}for(;a.have<19;)a.lens[ie[a.have++]]=0;if(a.lencode=a.lendyn,a.lenbits=7,ee={bits:a.lenbits},Q=c(0,a.lens,0,19,a.lencode,0,a.work,ee),a.lenbits=ee.bits,Q){e.msg="invalid code lengths set",a.mode=D;break}a.have=0,a.mode=16198;case 16198:for(;a.have<a.nlen+a.ndist;){for(;V=a.lencode[B&(1<<a.lenbits)-1],j=V>>>24,Y=V>>>16&255,G=65535&V,!(j<=C);){if(0===f)break e;f--,B+=o[l++]<<C,C+=8}if(G<16)B>>>=j,C-=j,a.lens[a.have++]=G;else{if(16===G){for(te=j+2;C<te;){if(0===f)break e;f--,B+=o[l++]<<C,C+=8}if(B>>>=j,C-=j,0===a.have){e.msg="invalid bit length repeat",a.mode=D;break}J=a.lens[a.have-1],L=3+(3&B),B>>>=2,C-=2}else if(17===G){for(te=j+3;C<te;){if(0===f)break e;f--,B+=o[l++]<<C,C+=8}B>>>=j,C-=j,J=0,L=3+(7&B),B>>>=3,C-=3}else{for(te=j+7;C<te;){if(0===f)break e;f--,B+=o[l++]<<C,C+=8}B>>>=j,C-=j,J=0,L=11+(127&B),B>>>=7,C-=7}if(a.have+L>a.nlen+a.ndist){e.msg="invalid bit length repeat",a.mode=D;break}for(;L--;)a.lens[a.have++]=J}}if(a.mode===D)break;if(0===a.lens[256]){e.msg="invalid code -- missing end-of-block",a.mode=D;break}if(a.lenbits=9,ee={bits:a.lenbits},Q=c(1,a.lens,0,a.nlen,a.lencode,0,a.work,ee),a.lenbits=ee.bits,Q){e.msg="invalid literal/lengths set",a.mode=D;break}if(a.distbits=6,a.distcode=a.distdyn,ee={bits:a.distbits},Q=c(2,a.lens,a.nlen,a.ndist,a.distcode,0,a.work,ee),a.distbits=ee.bits,Q){e.msg="invalid distances set",a.mode=D;break}if(a.mode=T,i===b)break e;case T:a.mode=O;case O:if(f>=6&&h>=258){e.next_out=d,e.avail_out=h,e.next_in=l,e.avail_in=f,a.hold=B,a.bits=C,r(e,F),d=e.next_out,s=e.output,h=e.avail_out,l=e.next_in,o=e.input,f=e.avail_in,B=a.hold,C=a.bits,a.mode===A&&(a.back=-1);break}for(a.back=0;V=a.lencode[B&(1<<a.lenbits)-1],j=V>>>24,Y=V>>>16&255,G=65535&V,!(j<=C);){if(0===f)break e;f--,B+=o[l++]<<C,C+=8}if(Y&&0==(240&Y)){for(X=j,W=Y,q=G;V=a.lencode[q+((B&(1<<X+W)-1)>>X)],j=V>>>24,Y=V>>>16&255,G=65535&V,!(X+j<=C);){if(0===f)break e;f--,B+=o[l++]<<C,C+=8}B>>>=X,C-=X,a.back+=X}if(B>>>=j,C-=j,a.back+=j,a.length=G,0===Y){a.mode=16205;break}if(32&Y){a.back=-1,a.mode=A;break}if(64&Y){e.msg="invalid literal/length code",a.mode=D;break}a.extra=15&Y,a.mode=16201;case 16201:if(a.extra){for(te=a.extra;C<te;){if(0===f)break e;f--,B+=o[l++]<<C,C+=8}a.length+=B&(1<<a.extra)-1,B>>>=a.extra,C-=a.extra,a.back+=a.extra}a.was=a.length,a.mode=16202;case 16202:for(;V=a.distcode[B&(1<<a.distbits)-1],j=V>>>24,Y=V>>>16&255,G=65535&V,!(j<=C);){if(0===f)break e;f--,B+=o[l++]<<C,C+=8}if(0==(240&Y)){for(X=j,W=Y,q=G;V=a.distcode[q+((B&(1<<X+W)-1)>>X)],j=V>>>24,Y=V>>>16&255,G=65535&V,!(X+j<=C);){if(0===f)break e;f--,B+=o[l++]<<C,C+=8}B>>>=X,C-=X,a.back+=X}if(B>>>=j,C-=j,a.back+=j,64&Y){e.msg="invalid distance code",a.mode=D;break}a.offset=G,a.extra=15&Y,a.mode=16203;case 16203:if(a.extra){for(te=a.extra;C<te;){if(0===f)break e;f--,B+=o[l++]<<C,C+=8}a.offset+=B&(1<<a.extra)-1,B>>>=a.extra,C-=a.extra,a.back+=a.extra}if(a.offset>a.dmax){e.msg="invalid distance too far back",a.mode=D;break}a.mode=16204;case 16204:if(0===h)break e;if(L=F-h,a.offset>L){if(L=a.offset-L,L>a.whave&&a.sane){e.msg="invalid distance too far back",a.mode=D;break}L>a.wnext?(L-=a.wnext,M=a.wsize-L):M=a.wnext-L,L>a.length&&(L=a.length),H=a.window}else H=s,M=d-a.offset,L=a.length;L>h&&(L=h),h-=L,a.length-=L;do{s[d++]=H[M++]}while(--L);0===a.length&&(a.mode=O);break;case 16205:if(0===h)break e;s[d++]=a.length,h--,a.mode=O;break;case U:if(a.wrap){for(;C<32;){if(0===f)break e;f--,B|=o[l++]<<C,C+=8}if(F-=h,e.total_out+=F,a.total+=F,4&a.wrap&&F&&(e.adler=a.check=a.flags?n(a.check,s,F,d-F):t(a.check,s,F,d-F)),F=h,4&a.wrap&&(a.flags?B:I(B))!==a.check){e.msg="incorrect data check",a.mode=D;break}B=0,C=0}a.mode=16207;case 16207:if(a.wrap&&a.flags){for(;C<32;){if(0===f)break e;f--,B+=o[l++]<<C,C+=8}if(4&a.wrap&&B!==(4294967295&a.total)){e.msg="incorrect length check",a.mode=D;break}B=0,C=0}a.mode=16208;case 16208:Q=k;break e;case D:Q=p;break e;case 16210:return v;default:return g}return e.next_out=d,e.avail_out=h,e.next_in=l,e.avail_in=f,a.hold=B,a.bits=C,(a.wsize||F!==e.avail_out&&a.mode<D&&(a.mode<U||i!==u))&&P(e,e.output,e.next_out,F-e.avail_out),z-=e.avail_in,F-=e.avail_out,e.total_in+=z,e.total_out+=F,a.total+=F,4&a.wrap&&F&&(e.adler=a.check=a.flags?n(a.check,s,F,e.next_out-F):t(a.check,s,F,e.next_out-F)),e.data_type=a.bits+(a.last?64:0)+(a.mode===A?128:0)+(a.mode===T||a.mode===S?256:0),(0===z&&0===F||i===u)&&Q===m&&(Q=x),Q},inflateEnd:e=>{if(N(e))return g;let t=e.state;return t.window&&(t.window=null),e.state=null,m},inflateGetHeader:(e,t)=>{if(N(e))return g;const i=e.state;return 0==(2&i.wrap)?g:(i.head=t,t.done=!1,m)},inflateSetDictionary:(e,i)=>{const n=i.length;let a,r,o;return N(e)?g:(a=e.state,0!==a.wrap&&a.mode!==R?g:a.mode===R&&(r=1,r=t(r,i,n,0),r!==a.check)?p:(o=P(e,i,n,n),o?(a.mode=16210,v):(a.havedict=1,m)))},inflateInfo:"pako inflate (from Nodeca project)"};const G=(e,t)=>Object.prototype.hasOwnProperty.call(e,t);var X=function(e){const t=Array.prototype.slice.call(arguments,1);for(;t.length;){const i=t.shift();if(i){if("object"!=typeof i)throw new TypeError(i+"must be non-object");for(const t in i)G(i,t)&&(e[t]=i[t])}}return e},W=e=>{let t=0;for(let i=0,n=e.length;i<n;i++)t+=e[i].length;const i=new Uint8Array(t);for(let t=0,n=0,a=e.length;t<a;t++){let a=e[t];i.set(a,n),n+=a.length}return i};let q=!0;try{String.fromCharCode.apply(null,new Uint8Array(1))}catch(e){q=!1}const J=new Uint8Array(256);for(let e=0;e<256;e++)J[e]=e>=252?6:e>=248?5:e>=240?4:e>=224?3:e>=192?2:1;J[254]=J[254]=1;var Q=e=>{if("function"==typeof TextEncoder&&TextEncoder.prototype.encode)return(new TextEncoder).encode(e);let t,i,n,a,r,o=e.length,s=0;for(a=0;a<o;a++)i=e.charCodeAt(a),55296==(64512&i)&&a+1<o&&(n=e.charCodeAt(a+1),56320==(64512&n)&&(i=65536+(i-55296<<10)+(n-56320),a++)),s+=i<128?1:i<2048?2:i<65536?3:4;for(t=new Uint8Array(s),r=0,a=0;r<s;a++)i=e.charCodeAt(a),55296==(64512&i)&&a+1<o&&(n=e.charCodeAt(a+1),56320==(64512&n)&&(i=65536+(i-55296<<10)+(n-56320),a++)),i<128?t[r++]=i:i<2048?(t[r++]=192|i>>>6,t[r++]=128|63&i):i<65536?(t[r++]=224|i>>>12,t[r++]=128|i>>>6&63,t[r++]=128|63&i):(t[r++]=240|i>>>18,t[r++]=128|i>>>12&63,t[r++]=128|i>>>6&63,t[r++]=128|63&i);return t},V=(e,t)=>{const i=t||e.length;if("function"==typeof TextDecoder&&TextDecoder.prototype.decode)return(new TextDecoder).decode(e.subarray(0,t));let n,a;const r=new Array(2*i);for(a=0,n=0;n<i;){let t=e[n++];if(t<128){r[a++]=t;continue}let o=J[t];if(o>4)r[a++]=65533,n+=o-1;else{for(t&=2===o?31:3===o?15:7;o>1&&n<i;)t=t<<6|63&e[n++],o--;o>1?r[a++]=65533:t<65536?r[a++]=t:(t-=65536,r[a++]=55296|t>>10&1023,r[a++]=56320|1023&t)}}return((e,t)=>{if(t<65534&&e.subarray&&q)return String.fromCharCode.apply(null,e.length===t?e:e.subarray(0,t));let i="";for(let n=0;n<t;n++)i+=String.fromCharCode(e[n]);return i})(r,a)},$=(e,t)=>{(t=t||e.length)>e.length&&(t=e.length);let i=t-1;for(;i>=0&&128==(192&e[i]);)i--;return i<0||0===i?t:i+J[e[i]]>t?i:t},ee={2:"need dictionary",1:"stream end",0:"","-1":"file error","-2":"stream error","-3":"data error","-4":"insufficient memory","-5":"buffer error","-6":"incompatible version"};var te=function(){this.input=null,this.next_in=0,this.avail_in=0,this.total_in=0,this.output=null,this.next_out=0,this.avail_out=0,this.total_out=0,this.msg="",this.state=null,this.data_type=2,this.adler=0};var ie=function(){this.text=0,this.time=0,this.xflags=0,this.os=0,this.extra=null,this.extra_len=0,this.name="",this.comment="",this.hcrc=0,this.done=!1};const ne=Object.prototype.toString,{Z_NO_FLUSH:ae,Z_FINISH:re,Z_OK:oe,Z_STREAM_END:se,Z_NEED_DICT:le,Z_STREAM_ERROR:de,Z_DATA_ERROR:fe,Z_MEM_ERROR:ce}=h;function he(e){this.options=X({chunkSize:65536,windowBits:15,to:""},e||{});const t=this.options;t.raw&&t.windowBits>=0&&t.windowBits<16&&(t.windowBits=-t.windowBits,0===t.windowBits&&(t.windowBits=-15)),!(t.windowBits>=0&&t.windowBits<16)||e&&e.windowBits||(t.windowBits+=32),t.windowBits>15&&t.windowBits<48&&0==(15&t.windowBits)&&(t.windowBits|=15),this.err=0,this.msg="",this.ended=!1,this.chunks=[],this.strm=new te,this.strm.avail_out=0;let i=Y.inflateInit2(this.strm,t.windowBits);if(i!==oe)throw new Error(ee[i]);if(this.header=new ie,Y.inflateGetHeader(this.strm,this.header),t.dictionary&&("string"==typeof t.dictionary?t.dictionary=Q(t.dictionary):"[object ArrayBuffer]"===ne.call(t.dictionary)&&(t.dictionary=new Uint8Array(t.dictionary)),t.raw&&(i=Y.inflateSetDictionary(this.strm,t.dictionary),i!==oe)))throw new Error(ee[i])}function ue(e,t){const i=new he(t);if(i.push(e),i.err)throw i.msg||ee[i.err];return i.result}he.prototype.push=function(e,t){const i=this.strm,n=this.options.chunkSize,a=this.options.dictionary;let r,o,s;if(this.ended)return!1;for(o=t===~~t?t:!0===t?re:ae,"[object ArrayBuffer]"===ne.call(e)?i.input=new Uint8Array(e):i.input=e,i.next_in=0,i.avail_in=i.input.length;;){for(0===i.avail_out&&(i.output=new Uint8Array(n),i.next_out=0,i.avail_out=n),r=Y.inflate(i,o),r===le&&a&&(r=Y.inflateSetDictionary(i,a),r===oe?r=Y.inflate(i,o):r===fe&&(r=le));i.avail_in>0&&r===se&&i.state.wrap>0&&0!==e[i.next_in];)Y.inflateReset(i),r=Y.inflate(i,o);switch(r){case de:case fe:case le:case ce:return this.onEnd(r),this.ended=!0,!1}if(s=i.avail_out,i.next_out&&(0===i.avail_out||r===se))if("string"===this.options.to){let e=$(i.output,i.next_out),t=i.next_out-e,a=V(i.output,e);i.next_out=t,i.avail_out=n-t,t&&i.output.set(i.output.subarray(e,e+t),0),this.onData(a)}else this.onData(i.output.length===i.next_out?i.output:i.output.subarray(0,i.next_out));if(r!==oe||0!==s){if(r===se)return r=Y.inflateEnd(this.strm),this.onEnd(r),this.ended=!0,!0;if(0===i.avail_in)break}}return!0},he.prototype.onData=function(e){this.chunks.push(e)},he.prototype.onEnd=function(e){e===oe&&("string"===this.options.to?this.result=this.chunks.join(""):this.result=W(this.chunks)),this.chunks=[],this.err=e,this.msg=this.strm.msg};var we=he,be=ue,me=function(e,t){return(t=t||{}).raw=!0,ue(e,t)},ke=ue,_e=h,ge={Inflate:we,inflate:be,inflateRaw:me,ungzip:ke,constants:_e};e.Inflate=we,e.constants=_e,e.default=ge,e.inflate=be,e.inflateRaw=me,e.ungzip=ke,Object.defineProperty(e,"__esModule",{value:!0})}));
+
+</script>
+<script>
+if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(function(){})}
+</script>
+</head>
+<body>
+<div class="app">
+  <aside class="side" id="side">
+    <div class="logo"><b>师</b>教师工作台</div>
+    <div class="tab active" data-p="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><path d="M9 22V12h6v10"/></svg>首页</div>
+    <div class="tab" data-p="class"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10L12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1.7 2.7 3 6 3s6-1.3 6-3v-5"/></svg>班级管理</div>
+    <div class="tab" data-p="group"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="4"/><path d="M2 21v-2a4 4 0 014-4h6a4 4 0 014 4v2"/></svg>小组建设</div>
+    <div class="tab" data-p="students"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="4"/><path d="M2 21v-2a4 4 0 014-4h6a4 4 0 014 4v2"/><path d="M16 3.1a4 4 0 010 7.8"/><path d="M22 21v-2a4 4 0 00-3-3.9"/></svg>学生管理</div>
+    <div class="tab" data-p="score"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M22 20H2"/></svg>成绩管理</div>
+    <div class="tab" data-p="hw"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 9l-10-5L2 9l10 5 10-5z"/><path d="M6 11v5a2 2 0 002 2h8a2 2 0 002-2v-5"/><path d="M22 9v6"/></svg>作业登记</div>
+    <div class="tab" data-p="log"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>班务日志</div>
+  </aside>
+  <main class="main">
+    <div class="topbar">
+      <div class="cls" title="点击修改班级名称"><input id="className" value="7年级7班"></div>
+      <select class="classes-sel" id="classSel" onchange="switchClass()"></select>
+      <div class="top-acts">
+        <button class="btn ghost sm" onclick="addClass()" title="新增一个班级（如：7年级8班）">＋ 新班级</button>
+        <button class="btn ghost sm danger-ghost" onclick="delClass()" title="删除当前班级及其全部数据">🗑 删班级</button>
+        <button class="btn ghost sm" onclick="backupData()" title="把全部数据导出为备份文件，可随时恢复">⬇ 备份</button>
+        <button class="btn ghost sm" onclick="document.getElementById('restoreFile').click()" title="从备份文件恢复数据（会覆盖当前数据，不是撤销）">⬆ 恢复</button>
+        <button class="btn ghost sm" onclick="undoLast()" title="撤销最近一次操作（自动保存的上一步快照）">↩ 撤销</button>
+        <button class="btn ghost sm" onclick="setCallname()" title="修改首页问候语中对你的称呼">👤 称呼</button>
+        <button class="btn danger sm" onclick="clearDemo()">清空示例</button>
+      </div>
+      <input type="file" id="restoreFile" accept=".json" style="display:none" onchange="restoreData(event)">
+      <div class="dt"><b id="nowDt">--</b><span id="nowWeek"></span></div>
+    </div>
+
+    <!-- 首页 -->
+    <section class="panel active" id="p-home">
+      <div class="card hero-card">
+        <div class="hero-top">
+          <div>
+            <div class="hero-greet" id="heroGreet">老师好</div>
+            <div class="hero-sub" id="heroSub"><b>语文老师</b> · 班主任</div>
+          </div>
+          <div class="hero-date" id="heroDate"></div>
+        </div>
+        <div class="hero-note">
+          <span class="hn-lab">⚡ 今日一句话速记</span>
+          <input id="heroNote" placeholder="写一句要做的事，如「布置语文作业」「下午3点开班会」——自动分到今日事项或作业" maxlength="60" onchange="saveHeroNote()">
+        </div>
+      </div>
+      <div class="card home-att-card">
+        <div class="card-tt"><h3><span class="ico">📋</span>考勤记录</h3><button class="btn sm" onclick="openAttend()">+ 登记</button></div>
+        <div id="homeAtt"></div>
+      </div>
+      <div class="card home-todo-card">
+        <div class="card-tt"><h3><span class="ico">✅</span>今日事项</h3><button class="btn sm ghost" onclick="manageTags()">标签管理</button></div>
+        <div class="todo-add">
+          <input id="homeTodoText" placeholder="记一件事，如：下午3点开班会" maxlength="50">
+          <select id="homeTodoTag"></select>
+          <button class="btn sm" onclick="addHomeTodo()">添加</button>
+        </div>
+        <div id="homeTodo"></div>
+      </div>
+      <div class="grid g2">
+        <div class="card"><h3><span class="ico">🧹</span>今日卫生安排</h3><div id="homeDuty"></div></div>
+        <div class="card"><h3><span class="ico">📅</span>今日课表</h3><div id="homeSchedule"></div></div>
+      </div>
+      <div class="card"><h3><span class="ico">📝</span>今日作业</h3><div id="homeHw"></div></div>
+    </section>
+
+    <!-- 班级管理 -->
+    <section class="panel" id="p-class">
+      <div class="card"><h3><span class="ico">🪑</span>班级座位表</h3>
+        <div class="toolbar">
+          排数 <input type="number" id="seatRows" value="6" min="1" max="12" style="width:60px" onchange="renderSeats()">
+          列数 <input type="number" id="seatCols" value="6" min="1" max="12" style="width:60px" onchange="renderSeats()">
+          <button class="btn sm" onclick="document.getElementById('seatStuFile').click()">导入学生名单</button>
+          <input type="file" id="seatStuFile" accept=".csv,.txt,.xlsx,.docx" style="display:none" onchange="loadSeatStudentFile(event)">
+          <button class="btn sm ghost" onclick="undoSeat()">撤销</button>
+          <button class="btn sm ghost" onclick="autoSeat('random')">随机排</button>
+          <button class="btn sm ghost" onclick="autoSeat('height')">按身高模式</button>
+          <button class="btn sm" onclick="saveSeats()">保存</button>
+        </div>
+        <div class="import-hint">拖动学生名字到座位格；"按身高模式"按身高排座（前排矮后排高）；导入文件含身高列时座位格会显示身高；双击座位格可移除学生</div>
+        <div id="seatBox"></div>
+      </div>
+      <div class="card"><h3><span class="ico">👔</span>班干部管理</h3>
+        <div class="toolbar"><button class="btn sm" onclick="addCadre()">+ 添加岗位</button><button class="btn sm ghost" onclick="document.getElementById('cadreFile').click()">导入文件</button><input type="file" id="cadreFile" accept=".csv,.txt,.xlsx,.docx" style="display:none" onchange="loadCadreFile(event)"><span class="import-hint">支持 Excel/CSV/Word：岗位,学生姓名,职责</span></div>
+        <div id="cadreList"></div>
+      </div>
+    </section>
+
+    <!-- 小组建设 -->
+    <section class="panel" id="p-group">
+      <div class="card foldable" data-fold="groupList"><h3 onclick="toggleCard('groupList',this)"><span class="ico">👥</span>小组名单<span class="fold-ico">▾</span></h3>
+        <div class="toolbar"><button class="btn sm" onclick="addGroup()">+ 小组</button><button class="btn sm ghost" onclick="autoGroup()">自动分组</button><button class="btn sm ghost" onclick="document.getElementById('groupFile').click()">导入文件</button><input type="file" id="groupFile" accept=".csv,.txt,.xlsx,.docx" style="display:none" onchange="loadGroupFile(event)"><span class="import-hint">支持 Excel/CSV/Word：组序号,组名,组长,组员1,组员2...（旧格式 组名,颜色,学生... 也兼容）</span></div>
+        <div id="groupList"></div>
+      </div>
+      <div class="card foldable" data-fold="dutyList"><h3 onclick="toggleCard('dutyList',this)"><span class="ico">🧹</span>卫生安排<span class="fold-ico">▾</span></h3>
+        <div class="toolbar"><button class="btn sm" onclick="addDuty()">+ 添加区域</button><button class="btn sm ghost" onclick="document.getElementById('dutyFile').click()">导入文件</button><input type="file" id="dutyFile" accept=".csv,.txt,.xlsx,.docx" style="display:none" onchange="loadDutyFile(event)"><span class="import-hint">支持 Excel/CSV/Word：星期,区域,学生名单</span></div>
+        <div id="dutyList"></div>
+      </div>
+    </section>
+
+    <!-- 学生管理 -->
+    <section class="panel" id="p-students">
+      <div class="card foldable" data-fold="stuList"><h3 onclick="toggleCard('stuList',this)"><span class="ico">👦</span>学生名单<span class="fold-ico">▾</span></h3>
+        <div class="toolbar">
+          <button class="btn sm" onclick="addStudent()">+ 添加学生</button>
+          <button class="btn sm ghost" onclick="document.getElementById('stuFile').click()">导入文件</button>
+          <input type="file" id="stuFile" accept=".csv,.txt,.xlsx,.docx" style="display:none" onchange="loadStudentFile(event)">
+          <button class="btn sm ghost" onclick="exportStudents()">导出名单</button>
+          <button class="btn sm ghost danger-text" onclick="clearStudents()">清空名单</button>
+          <span class="import-hint">CSV格式：学号,姓名,性别,出生日期,身高,住址,家长姓名,家长电话</span>
+        </div>
+        <div id="studentList"></div>
+      </div>
+      <div class="card foldable" data-fold="profile"><h3 onclick="toggleCard('profile',this)"><span class="ico">🗂️</span>学生个人档案 <span class="tag red">隐私保护：数据仅存本机</span><span class="fold-ico">▾</span></h3>
+        <div class="toolbar">
+          <button class="btn sm ghost" onclick="document.getElementById('profileFile').click()">导入文件</button>
+          <input type="file" id="profileFile" accept=".csv,.txt,.xlsx,.docx" style="display:none" onchange="loadProfileFile(event)">
+          <span class="import-hint">支持 Excel/CSV/Word：学号,姓名,性别,出生日期,身高,住址,家长姓名,家长电话（按学号或姓名匹配更新档案）</span>
+        </div>
+        <div id="profileList"></div>
+      </div>
+      <div class="card"><h3><span class="ico">🏅</span>奖惩记录</h3>
+        <div class="toolbar"><button class="btn sm" onclick="addReward()">+ 记录奖惩</button></div>
+        <div id="rewardList"></div>
+      </div>
+    </section>
+
+    <!-- 成绩管理 -->
+    <section class="panel" id="p-score">
+      <div class="card foldable" data-fold="score"><h3 onclick="toggleCard('score',this)"><span class="ico">📊</span>学生成绩<span class="fold-ico">▾</span></h3>
+        <div class="toolbar">
+          <button class="btn sm" onclick="addExam()">+ 添加考试</button>
+          <button class="btn sm ghost" onclick="document.getElementById('scoreFile').click()">导入文件</button>
+          <input type="file" id="scoreFile" accept=".csv,.txt,.xlsx,.docx" style="display:none" onchange="loadScoreFile(event)">
+          <button class="btn sm ghost" onclick="exportScores()">导出成绩</button>
+          <select id="examSel" onchange="renderExams()" style="max-width:170px"></select>
+          <button class="btn sm" onclick="aiAnalyze()">🤖 AI分析成绩</button>
+        </div>
+        <div id="examList"></div>
+        <div id="aiResult"></div>
+      </div>
+    </section>
+
+    <!-- 作业登记 -->
+    <section class="panel" id="p-hw">
+      <div class="card"><h3><span class="ico">📝</span>每日作业登记</h3>
+        <div class="toolbar">
+          <input type="date" id="hwDate">
+          <input type="text" id="hwContent" placeholder="作业内容，如：语文练习册P12-15" style="flex:1;min-width:200px">
+          <button class="btn sm" onclick="saveHomework()">保存/更新</button>
+          <button class="btn sm ghost" onclick="allSubmitted()">一键全部已交</button>
+          <button class="btn sm ghost" onclick="exportHw()">导出数据</button>
+          <button class="btn sm ghost" onclick="hwByGroup()">按小组查看</button>
+        </div>
+        <div class="import-hint">提交：√已交 ×未交 △未完成 | 质量：⭐优秀 ✅良好 🔵一般 ❌较差（点击状态格切换）</div>
+        <div id="hwTableWrap"></div>
+      </div>
+      <div class="grid g2">
+        <div class="card"><h3><span class="ico">📈</span>全班作业统计图</h3><div id="hwStatChart"></div></div>
+        <div class="card"><h3><span class="ico">👤</span>单个学生作业趋势</h3>
+          <div class="toolbar"><select id="hwStuSel" onchange="renderHwStuChart()"></select></div>
+          <div id="hwStuChart"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 班务日志 -->
+    <section class="panel" id="p-log">
+      <div class="grid g2">
+        <div class="card"><h3><span class="ico">📋</span>考勤记录</h3>
+          <div class="toolbar"><input type="date" id="attDate"><button class="btn sm" onclick="openAttend()">登记</button><button class="btn sm" onclick="setAllAtt()">一键全部已到</button></div>
+          <div class="toolbar"><button class="btn sm ghost" onclick="document.getElementById('attFile').click()">导入名单</button><input type="file" id="attFile" accept=".csv,.txt,.xlsx,.docx" style="display:none" onchange="loadAttFile(event)"><span class="import-hint" style="font-size:11px">导入后才知道应到名单</span><button class="btn sm ghost" style="margin-left:auto" onclick="exportAtt()">导出考勤</button></div>
+          <div id="attList"></div>
+        </div>
+        <div class="card"><h3><span class="ico">📒</span>今日事项</h3>
+          <div class="toolbar"><input type="text" id="todoText" placeholder="添加事项" style="flex:1"><button class="btn sm" onclick="addTodo()">添加</button></div>
+          <div id="todoList"></div>
+        </div>
+        <div class="card"><h3><span class="ico">📇</span>沟通记录（通讯录）</h3>
+          <div class="toolbar">
+            <button class="btn sm" onclick="addContact()">+ 联系人</button>
+            <button class="btn sm ghost" onclick="document.getElementById('contactFile').click()">导入文件</button>
+            <input type="file" id="contactFile" accept=".csv,.txt,.xlsx,.docx" style="display:none" onchange="loadContactFile(event)">
+            <button class="btn sm" onclick="addCommLog()">+ 记录沟通</button>
+          </div>
+          <div class="import-hint">CSV格式：学生姓名,关系,联系人姓名,电话</div>
+          <div id="contactList"></div>
+          <div id="commLogList"></div>
+        </div>
+        <div class="card"><h3><span class="ico">🗓️</span>我的课表</h3>
+          <div class="toolbar"><button class="btn sm" onclick="openSchedule()">编辑课表</button><button class="btn sm ghost" onclick="document.getElementById('scheduleFile').click()">导入文件</button><input type="file" id="scheduleFile" accept=".csv,.txt,.xlsx,.docx" style="display:none" onchange="loadScheduleFile(event)"><span class="import-hint">支持 Excel/CSV/Word：星期,节次,课程名</span></div>
+          <div id="scheduleView"></div>
+        </div>
+      </div>
+      <div class="card"><h3><span class="ico">✍️</span>工作留痕</h3>
+        <div class="toolbar"><input type="text" id="logText" placeholder="记录今日工作内容" style="flex:1"><button class="btn sm" onclick="addWorkLog()">添加</button></div>
+        <div id="workLogList"></div>
+      </div>
+    </section>
+
+    <div class="footer-note">数据保存在本机浏览器 localStorage · 建议定期导出备份</div>
+  </main>
+    <nav class="mnav" id="mnav">
+      <div class="tab active" data-p="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><path d="M9 22V12h6v10"/></svg>首页</div>
+      <div class="tab" data-p="class"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10L12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1.7 2.7 3 6 3s6-1.3 6-3v-5"/></svg>班级</div>
+      <div class="tab" data-p="group"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="4"/><path d="M2 21v-2a4 4 0 014-4h6a4 4 0 014 4v2"/></svg>小组</div>
+      <div class="tab" data-p="students"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="4"/><path d="M2 21v-2a4 4 0 014-4h6a4 4 0 014 4v2"/><path d="M16 3.1a4 4 0 010 7.8"/><path d="M22 21v-2a4 4 0 00-3-3.9"/></svg>学生</div>
+      <div class="tab" data-p="score"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M22 20H2"/></svg>成绩</div>
+      <div class="tab" data-p="hw"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 9l-10-5L2 9l10 5 10-5z"/><path d="M6 11v5a2 2 0 002 2h8a2 2 0 002-2v-5"/><path d="M22 9v6"/></svg>作业</div>
+      <div class="tab" data-p="log"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>日志</div>
+    </nav>
+</div>
+
+<!-- 弹窗 -->
+<div id="modalMask" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:99;overflow:auto">
+  <div id="modalBox" style="max-width:760px;margin:40px auto;background:#fff;border-radius:14px;padding:20px;position:relative"></div>
+</div>
+
+<script>
+/* ========== 数据层 ========== */
+const WEEK=['周日','周一','周二','周三','周四','周五','周六'];
+const LS_KEY='tWorkbench_v1';
+let S=load();
+function load(){
+  try{return JSON.parse(localStorage.getItem(LS_KEY))||{cur:'c1',classes:{c1:newClassData('7年级7班')}}}catch(e){return {cur:'c1',classes:{c1:newClassData('7年级7班')}}}
+}
+function save(){
+  try{const cur=JSON.stringify(S);const old=localStorage.getItem(LS_KEY);if(old&&old!==cur){localStorage.setItem('tWorkbench_prev',old);}}catch(e){}
+  localStorage.setItem(LS_KEY,JSON.stringify(S));}
+/* 确认弹窗（手机端原生 confirm 不弹，统一走自定义弹窗） */
+let _confirmCb=null;
+function confirmBox(msg,onOk){
+  _confirmCb=onOk;
+  showModal(`<h3>确认操作</h3><div style="margin:12px 0;font-size:14px;line-height:1.7">${msg}</div><div style="text-align:right"><button class="btn ghost" onclick="hideModal()">取消</button> <button class="btn danger" onclick="doConfirm()">确认</button></div>`);
+}
+function doConfirm(){hideModal();if(_confirmCb){const cb=_confirmCb;_confirmCb=null;cb();}}
+/* 撤销上一步：save 时自动保留最近一次操作前的快照 */
+function undoLast(){
+  const p=localStorage.getItem('tWorkbench_prev');
+  if(!p){showModal(`<h3>没有可撤销的上一步</h3><div style="margin:10px 0;color:var(--mut);font-size:13px">每次修改数据时会自动保留上一步快照，点击「撤销」即可退回最近一次操作之前的状态。</div><div style="text-align:right"><button class="btn" onclick="hideModal()">知道了</button></div>`);return;}
+  confirmBox('将恢复到上一步的状态，当前最新改动会丢失。确认撤销？',()=>{
+    try{S=JSON.parse(p);localStorage.removeItem('tWorkbench_prev');save();refreshClassUI();renderAll();alert('已撤销到上一步');}catch(e){alert('撤销失败：数据不完整');}
+  });
+}
+function newClassData(name){return {name,students:[],groups:[],seats:{rows:6,cols:6,grid:[]},convention:{text:'',rules:[]},cadres:[],duty:[],attendance:[],assignments:[],exams:[],rewards:[],contacts:[],commLogs:[],todos:[],schedule:{Mon:[],Tue:[],Wed:[],Thu:[],Fri:[]},workLogs:[]}}
+function cur(){return S.classes[S.cur]}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
+function today(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function todayCN(){const d=new Date();return WEEK[d.getDay()]}
+
+/* ========== 顶部/时钟 ========== */
+function tick(){
+  const d=new Date();
+  document.getElementById('nowDt').textContent=d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日 '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+  document.getElementById('nowWeek').textContent=WEEK[d.getDay()];
+}
+setInterval(tick,1000);tick();
+
+function refreshClassUI(){
+  document.getElementById('className').value=cur().name;
+  const sel=document.getElementById('classSel');
+  sel.innerHTML='';
+  Object.keys(S.classes).forEach(id=>{
+    const o=document.createElement('option');o.value=id;o.textContent=S.classes[id].name;sel.appendChild(o);
+  });
+  sel.value=S.cur;
+}
+function switchClass(){S.cur=document.getElementById('classSel').value;save();refreshClassUI();renderAll();}
+function addClass(){showModal(`<h3>新增班级</h3><div style="margin:10px 0">班级名称：<input id="newClsName" placeholder="如：7年级8班" maxlength="20" style="width:100%"></div><div style="text-align:right"><button class="btn ghost" onclick="hideModal()">取消</button> <button class="btn" onclick="saveClass2()">创建</button></div>`);setTimeout(()=>{const i=document.getElementById('newClsName');if(i){i.focus();}},60);}
+function saveClass2(){const n=document.getElementById('newClsName').value.trim();if(!n){alert('请输入班级名称');return;}const id=uid();S.classes[id]=newClassData(n);S.cur=id;save();refreshClassUI();renderAll();hideModal();}
+function delClass(){const ids=Object.keys(S.classes);if(ids.length<=1){showModal(`<h3>无法删除</h3><div style="margin:10px 0;color:var(--red)">至少保留一个班级。可先新增班级后再删除当前班级。</div><div style="text-align:right"><button class="btn" onclick="hideModal()">知道了</button></div>`);return;}const c=cur();showModal(`<h3>删除班级「${esc(c.name)}」</h3><div style="margin:10px 0;color:var(--red)">⚠️ 将删除该班级及其全部数据（学生、作业、考勤、卫生、课表等），不可恢复！</div><div style="text-align:right"><button class="btn ghost" onclick="hideModal()">取消</button> <button class="btn danger" onclick="delClass2()">确认删除</button></div>`);}
+function delClass2(){const delId=S.cur;delete S.classes[delId];const ids=Object.keys(S.classes);S.cur=ids[0];save();refreshClassUI();renderAll();hideModal();}
+
+function saveClass(){cur().name=document.getElementById('className').value||'未命名班级';save();refreshClassUI();}
+
+/* ========== Tab切换 ========== */
+document.querySelectorAll('.side .tab, .mnav .tab').forEach(t=>t.onclick=()=>{
+  document.querySelectorAll('.side .tab, .mnav .tab').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+  t.classList.add('active');
+  document.getElementById('p-'+t.dataset.p).classList.add('active');
+});
+
+/* ========== 弹窗 ========== */
+function showModal(html){document.getElementById('modalMask').style.display='block';document.getElementById('modalBox').innerHTML=html;}
+function hideModal(){document.getElementById('modalMask').style.display='none';}
+function viewPhoto(sid){const c=cur();const s=c.students.find(x=>x.id===sid);if(s&&s.photo)showModal(`<h3>${esc(s.name)}</h3><img class="photo-lg" src="${s.photo}"><div style="text-align:right;margin-top:10px"><button class="btn" onclick="hideModal()">关闭</button></div>`);}
+document.getElementById('modalMask').onclick=e=>{if(e.target.id==='modalMask')hideModal();};
+
+/* ========== 通用HTML转义 ========== */
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+
+let demoCleared=localStorage.getItem('tWorkbench_noDemo')==='1';
+/* ========== 内置107班真实数据（替代示例数据） ========== */
+const REAL_DATA=JSON.parse('{"name":"7年级7班","students":[{"id":"s0","no":1,"name":"孔睿哲","sex":"男","birth":"","height":"","addr":"","pname":"","pphone":""},{"id":"s1","no":2,"name":"邓可馨","sex":"女","birth":"","height":"","addr":"","pname":"","pphone":""},{"id":"s2","no":3,"name":"邓菁","sex":"女","birth":"","height":"","addr":"","pname":"","pphone":""},{"id":"s3","no":4,"name":"甘昊博","sex":"男","birth":"","height":"","addr":"","pname":"","pphone":""},{"id":"s4","no":5,"name":"叶雨彤","sex":"女","birth":"","height":"","addr":"","pname":"","pphone":""},{"id":"s5","no":6,"name":"吕诗诗","sex":"女","birth":"","height":"","addr":"","pname":"","pphone":""},{"id":"s6","no":7,"name":"朱珈霓","sex":"女","birth":"","height":"","addr":"","pname":"","pphone":""},{"id":"s7","no":8,"name":"庄雅萱","sex":"女","birth":"","height":"","addr":"","pname":"","pphone":""},{"id":"s8","no":9,"name":"刘星","sex":"男","birth":"","height":"","addr":"","pname":"","pphone":""},{"id":"s9","no":10,"name":"江展霖","sex":"男","birth":"","height":"","addr":"","pname":"","pphone":""},{"id":"s10","no":11,"name":"汤皓轩","sex":"男","birth":"","height":"","addr":"","pname":"","pphone":""},{"id":"s11","no":12,"name":"许译同","sex":"男","birth":"","height":"","addr":"","pname":"","pphone":""},{"id":"s12","no":13,"name":"孙芮昕","sex":"女","birth":"","height":"","addr":"","pname":"","pphone":""},{"id":"s13","no":14,"name":"李天佑","sex":"男","birth":"","height":"","addr":"","pname":"","pphone":""},{"id":"s14","no":15,"name":"李辰和","sex":"男","birth":"","height":"","addr":"","pname":"","pphone":""},{"id":"s15","no":16,"name":"李若溪","sex":"女","birth":"","height":"","addr":"","pname":"","pphone":""},{"id":"s16","no":17,"name":"李昊洋","sex":"男","birth":"","height":"","addr":"","pname":"","pphone":""},{"id":"s17","no":18,"name":"李哲宇","sex":"男","birth":"","height":"","addr":"","pname":"","pphone":""},{"id":"s18","no":19,"name":"杨涵熙","sex":"男","birth":"","height":"","addr":"","pname":"","pphone":""},{"id":"s19","no":20,"name":"吴子轩","sex":"男","birth":"","height":"","addr":"","pname":"","pphone":""},{"id":"s20","no":21,"name":"何翊","sex":"女","birth":"","height":"","addr":"","pname":"","pphone":""},{"id":"s21","no":22,"name":"何馨雨","sex":"女","birth":"","height":"","addr":"","pname":"","pphone":""},{"id":"s22","no":23,"name":"余宏远","sex":"男","birth":"","height":"","addr":"","pname":"","pphone":""},{"id":"s23","no":24,"name":"邹若涵","sex":"女","birth":"","height":"","addr":"","pname":"","pphone":""},{"id":"s24","no":25,"name":"沈皓漮","sex":"男","birth":"","height":"","addr":"","pname":"","pphone":""},{"id":"s25","no":26,"name":"张宁飞","sex":"男","birth":"","height":"","addr":"","pname":"","pphone":""},{"id":"s26","no":27,"name":"张茉涵","sex":"女","birth":"","height":"","addr":"","pname":"","pphone":""},{"id":"s27","no":28,"name":"张梓谦","sex":"男","birth":"","height":"","addr":"","pname":"","pphone":""},{"id":"s28","no":29,"name":"陈子萱","sex":"女","birth":"","height":"","addr":"","pname":"","pphone":""},{"id":"s29","no":30,"name":"武康顺","sex":"男","birth":"","height":"","addr":"","pname":"","pphone":""},{"id":"s30","no":31,"name":"周子菲","sex":"女","birth":"","height":"","addr":"","pname":"","pphone":""},{"id":"s31","no":32,"name":"周奕彤","sex":"女","birth":"","height":"","addr":"","pname":"","pphone":""},{"id":"s32","no":33,"name":"郑晓雅","sex":"女","birth":"","height":"","addr":"","pname":"","pphone":""},{"id":"s33","no":34,"name":"单佳妮","sex":"女","birth":"","height":"","addr":"","pname":"","pphone":""},{"id":"s34","no":35,"name":"胡江迪","sex":"男","birth":"","height":"","addr":"","pname":"","pphone":""},{"id":"s35","no":36,"name":"徐彤彤","sex":"女","birth":"","height":"","addr":"","pname":"","pphone":""},{"id":"s36","no":37,"name":"徐思涵","sex":"女","birth":"","height":"","addr":"","pname":"","pphone":""},{"id":"s37","no":38,"name":"徐晟蕊","sex":"女","birth":"","height":"","addr":"","pname":"","pphone":""},{"id":"s38","no":39,"name":"徐蓓儿","sex":"女","birth":"","height":"","addr":"","pname":"","pphone":""},{"id":"s39","no":40,"name":"高钲翔","sex":"男","birth":"","height":"","addr":"","pname":"","pphone":""},{"id":"s40","no":41,"name":"康炳有","sex":"男","birth":"","height":"","addr":"","pname":"","pphone":""},{"id":"s41","no":42,"name":"章心仰","sex":"男","birth":"","height":"","addr":"","pname":"","pphone":""},{"id":"s42","no":43,"name":"程耀杰","sex":"男","birth":"","height":"","addr":"","pname":"","pphone":""},{"id":"s43","no":44,"name":"楼轩辰","sex":"男","birth":"","height":"","addr":"","pname":"","pphone":""},{"id":"s44","no":45,"name":"楼铧","sex":"男","birth":"","height":"","addr":"","pname":"","pphone":""},{"id":"s45","no":46,"name":"鲍馨瑶","sex":"女","birth":"","height":"","addr":"","pname":"","pphone":""}],"groups":[{"id":"g1","idx":"1","name":"第一组","color":"#8d9db6","mids":["s20","s3","s32","s44","s37","s22","s7","s42"],"leaderId":"s20","leaderName":"何翊"},{"id":"g2","idx":"2","name":"第二组","color":"#4f6ef7","mids":["s30","s14","s12","s29","s28","s27","s26","s16"],"leaderId":"s30","leaderName":"周子菲"},{"id":"g3","idx":"3","name":"第三组","color":"#22a06b","mids":["s11","s4","s43","s33","s39","s21","s18"],"leaderId":"s11","leaderName":"许译同"},{"id":"g4","idx":"4","name":"第四组","color":"#c94f4f","mids":["s31","s25","s36","s34","s5","s24","s2","s41"],"leaderId":"s31","leaderName":"周奕彤"},{"id":"g5","idx":"5","name":"第五组","color":"#b05dd3","mids":["s23","s10","s15","s40","s1","s8","s6","s17"],"leaderId":"s23","leaderName":"邹若涵"},{"id":"g6","idx":"6","name":"第六组","color":"#e08a2e","mids":["s9","s35","s0","s45","s19","s38","s13"],"leaderId":"s9","leaderName":"江展霖"}],"seats":{"rows":6,"cols":6,"grid":[]},"convention":{"text":"","rules":[]},"cadres":[],"duty":[],"attendance":[],"assignments":[],"exams":[],"rewards":[],"contacts":[],"commLogs":[],"todos":[],"schedule":{"Mon":[],"Tue":[],"Wed":[],"Thu":[],"Fri":[]},"workLogs":[]}');
+function seedDemo(){
+  const c=cur();
+  const demoSet=['王小明','李恩颖','张浩然','何翊','李慧敏','余宗成','刘星','庄佳妮'];
+  const isDemo=c.students.length>0&&c.students.length<=8&&c.students.every(s=>demoSet.includes(String(s.name)));
+  const realNames=REAL_DATA.students.map(s=>s.name);
+  const hasAllReal=realNames.every(nm=>c.students.some(s=>String(s.name)===nm));
+  if(c.students.length===0||isDemo||(c.students.length>realNames.length&&hasAllReal)){
+    Object.assign(c,JSON.parse(JSON.stringify(REAL_DATA)));
+    try{localStorage.setItem('tWorkbench_seeded107','1');}catch(e){}
+    save();
+  }
+}
+
+
+/* ========== 渲染入口 ========== */
+function renderAll(){seedDemo();renderHero();renderHome();renderCadres();renderSeats();renderGroups();renderDuty();renderStudents();renderExams();renderProfiles();renderRewards();renderHw();renderAtt();renderTodos();renderContacts();renderCommLogs();renderSchedule();renderWorkLogs();}
+
+/* ---------- 首页问候 / 称呼 / 一句话速记 ---------- */
+const CN_KEY='tWorkbench_callname';
+function callname(){const v=localStorage.getItem(CN_KEY);return v&&v.trim()?v.trim():'老师';}
+function setCallname(){showModal(`<h3>设置称呼</h3><div style="margin:10px 0;color:var(--mut);font-size:13px">称呼会显示在首页问候语中，如「早上好，陈老师」。</div><div style="margin:8px 0">希望工作台怎么称呼你？<br><br><input id="cnInput" value="${esc(callname())}" placeholder="如：陈老师" maxlength="12"></div><div style="text-align:right"><button class="btn ghost" onclick="hideModal()">取消</button> <button class="btn" onclick="saveCallname()">保存</button></div>`);setTimeout(()=>{const i=document.getElementById('cnInput');if(i){i.focus();i.select();}},60);}
+function saveCallname(){const v=document.getElementById('cnInput').value.trim();if(!v){hideModal();return;}try{localStorage.setItem(CN_KEY,v);}catch(e){}renderHero();hideModal();}
+function toast(msg){let el=document.getElementById('toast');if(!el){el=document.createElement('div');el.id='toast';document.body.appendChild(el);}el.textContent=msg;el.className='show';clearTimeout(el._t);el._t=setTimeout(()=>el.className='',2200);}
+/* ---------- 今日事项标签系统 ---------- */
+const TAG_KEY='tWorkbench_tags';
+function getTags(){let t=[];try{t=JSON.parse(localStorage.getItem(TAG_KEY)||'')}catch(e){}const def=['待办','作业','通知','会议','其他'];if(!Array.isArray(t)||!t.length)t=def;return [...new Set(t.filter(Boolean))];}
+function saveTags(t){try{localStorage.setItem(TAG_KEY,JSON.stringify(t))}catch(e){}}
+function manageTags(){const t=getTags();showModal('<h3>管理标签</h3><div style="margin:10px 0;font-size:13px;color:var(--mut)">可新增或删除标签。删除后，已使用该标签的事项会变成「无标签」。</div><div style="display:flex;flex-wrap:wrap;gap:8px;margin:10px 0">'+t.map((x,i)=>'<span class="tag" style="background:#eef3ff;color:var(--pri);cursor:pointer" onclick="delTag('+i+')">'+esc(x)+' ✕</span>').join('')+'<span style="color:var(--mut)">暂无标签</span></div><div style="display:flex;gap:8px"><input id="newTagInput" placeholder="新标签名" maxlength="8" style="flex:1"><button class="btn" onclick="addTag()">新增</button></div><div style="text-align:right;margin-top:14px"><button class="btn ghost" onclick="hideModal()">完成</button></div>');setTimeout(()=>{const i=document.getElementById('newTagInput');if(i)i.focus();},60);}
+function addTag(){const v=(document.getElementById('newTagInput').value||'').trim();if(!v)return;const t=getTags();if(t.includes(v))return;t.push(v);saveTags(t);manageTags();}
+function delTag(i){const t=getTags();const tg=t[i];if(!tg)return;confirmBox('删除标签「'+tg+'」？',()=>{const t2=getTags();t2.splice(i,1);saveTags(t2);const c=cur();c.todos.forEach(td=>td.items.forEach(it=>{if(it.tag===tg)it.tag='';}));save();renderHome();renderTodos();manageTags();});}
+function refreshTodoTagSel(){const el=document.getElementById('homeTodoTag');if(!el)return;el.innerHTML='<option value="">无标签</option>'+getTags().map(x=>'<option>'+esc(x)+'</option>').join('');}
+function todoItemHTML(it,i,d){return '<div class="todo-item '+(it.done?'done':'')+'" onclick="toggleTodo(\''+d+'\','+i+')"><div class="cb">'+(it.done?'✓':'')+'</div><span class="txt">'+(it.tag?'<span class="todo-tag" onclick="event.stopPropagation();editTodoTag(\''+d+'\','+i+')" title="点击改标签">'+esc(it.tag)+'</span>':'')+esc(it.t)+'</span><button class="btn sm ghost" style="margin-left:auto" onclick="event.stopPropagation();delTodo('+i+')">删</button></div>';}
+function addHomeTodo(){const c=cur();const d=today();const v=(document.getElementById('homeTodoText').value||'').trim();if(!v)return;const tag=document.getElementById('homeTodoTag').value||'';let td=c.todos.find(t=>t.date===d);if(!td){td={date:d,items:[]};c.todos.push(td);}td.items.push({t:v,done:false,tag:tag});document.getElementById('homeTodoText').value='';save();renderHome();renderTodos();toast('已加入今日事项');}
+function editTodoTag(d,i){const c=cur();const td=c.todos.find(t=>t.date===d);if(!td)return;const it=td.items[i];const t=getTags();const opts='<option value="">无标签</option>'+t.map(x=>'<option '+(it.tag===x?'selected':'')+'>'+esc(x)+'</option>').join('')+'<option value="__new">+ 新建…</option>';
+  showModal('<h3>修改标签</h3><div style="margin:10px 0;font-size:13px">事项：'+esc(it.t)+'</div><div style="margin:8px 0">标签：<select id="tagSel" onchange="tagSelChg()">'+opts+'</select></div><div id="tagNewWrap" style="display:none;margin:8px 0">新标签：<input id="tagNewInput" maxlength="8" placeholder="输入新标签名" style="width:100%"></div><div style="text-align:right"><button class="btn ghost" onclick="hideModal()">取消</button> <button class="btn" onclick="saveTodoTag(\''+d+'\','+i+')">保存</button></div>');}
+function tagSelChg(){const v=document.getElementById('tagSel').value;document.getElementById('tagNewWrap').style.display=v==='__new'?'block':'none';}
+function saveTodoTag(d,i){const c=cur();const td=c.todos.find(t=>t.date===d);if(!td)return;const sel=document.getElementById('tagSel');let v=sel.value;if(v==='__new'){const nv=(document.getElementById('tagNewInput').value||'').trim();if(nv){const t=getTags();if(!t.includes(nv)){t.push(nv);saveTags(t);}v=nv;}}td.items[i].tag=v;save();renderHome();renderTodos();hideModal();}
+/* ---------- 一句话速记 AI 分类 ---------- */
+const AI_HW=['作业','写','练习','抄','背','默写','订正','预习','复习','试卷','作文','听写','单词','计算','朗读','阅读','读书','练习册','课本','教材','页','题','本','册','文言','古诗','生字','词语','造句','周记','日记','摘抄','罚写','作业本'];
+const AI_TODO=['交','带','提醒','通知','开会','记得','安排','清点','值日','检查','收','统计','上报','汇总','材料','缴费','填表','联系','请假','活动','家长','班会','考试','监考','教研','报名','领取','发放','拍照','打印','复印','传达','找','约','提醒学生','跟','确认'];
+function classifyHero(text){const t=String(text||'').replace(/[，。！？、,.!?\s]/g,'');let hw=0,todo=0;AI_HW.forEach(k=>{if(t.includes(k))hw++;});AI_TODO.forEach(k=>{if(t.includes(k))todo++;});return hw>todo?'hw':'todo';}
+function saveHeroNote(){const el=document.getElementById('heroNote');const text=(el.value||'').trim();
+  if(!text){try{localStorage.setItem('tWorkbench_note','');}catch(e){}return;}
+  const c=cur();const d=today();
+  if(classifyHero(text)==='hw'){
+    let hw=c.assignments.find(a=>a.date===d);
+    if(!hw){hw={date:d,content:'',records:{}};c.assignments.push(hw);}
+    hw.content=hw.content?hw.content+'；'+text:text;
+    c.students.forEach(s=>{if(!(s.id in hw.records))hw.records[s.id]={};});
+    save();renderHw();el.value='';try{localStorage.setItem('tWorkbench_note','');}catch(e){}
+    toast('已归入今日作业：'+text);
+  }else{
+    let td=c.todos.find(t=>t.date===d);
+    if(!td){td={date:d,items:[]};c.todos.push(td);}
+    td.items.push({t:text,done:false,tag:'速记'});
+    save();renderHome();renderTodos();el.value='';try{localStorage.setItem('tWorkbench_note','');}catch(e){}
+    toast('已加入今日事项（标签：速记）');
+  }
+}
+function renderHero(){
+  const d=new Date();const h=d.getHours();
+  const g=h<5?'夜深了，注意休息':h<9?'早上好':h<11?'上午好':h<13?'中午好':h<18?'下午好':'晚上好';
+  const el=document.getElementById('heroGreet');if(el)el.textContent=g+'，'+callname()+' 👋';
+  const ds=WEEK[d.getDay()];
+  const de=document.getElementById('heroDate');if(de)de.innerHTML=d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日<br>'+ds;
+  const note=document.getElementById('heroNote');if(note)note.value=localStorage.getItem('tWorkbench_note')||'';
+}
+
+/* ---------- 首页 ---------- */
+function renderHome(){
+  const c=cur();const d=today();const wd=todayCN();
+  // 考勤
+  const att=c.attendance.find(a=>a.date===d);
+  const n=c.students.length;
+  let out='<div class="stat-cards">';
+  if(att){
+    const cnt={出勤:0,缺勤:0,迟到:0,请假:0};
+    Object.values(att.records).forEach(v=>cnt[v]=(cnt[v]||0)+1);
+    const reasons=att.reasons||{};
+    const leave=c.students.filter(s=>att.records[s.id]==='请假').map(s=>`${esc(s.name)}${reasons[s.id]?'（'+esc(reasons[s.id])+'）':''}`);
+    out+=`<div class="stat"><div class="lb">出勤</div><b>${cnt.出勤||0}</b></div><div class="stat"><div class="lb">迟到</div><b>${cnt.迟到||0}</b></div><div class="stat"><div class="lb">请假</div><b>${cnt.请假||0}</b></div><div class="stat"><div class="lb">应到</div><b>${n}</b></div>`;
+    if(leave.length)out+=`<div style="grid-column:1/-1;font-size:13px;color:var(--red)">请假：${leave.join('、')}</div>`;
+    if(att.note)out+=`<div style="grid-column:1/-1;color:var(--red);font-size:13px">⚠️ ${esc(att.note)}</div>`;
+  }else out+=`<div class="stat" style="grid-column:1/-1"><div class="lb">今日考勤</div><b>未登记 · 应到 ${n}人</b></div>`;
+  out+='</div><div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap"><button class="btn sm" onclick="setAllAtt()">一键全部已到</button><button class="btn sm ghost" onclick="openAttend()">登记</button><button class="btn sm ghost" onclick="exportAtt()">导出考勤</button><button class="btn sm ghost" onclick="exportAll()">导出全部</button></div>';
+  document.getElementById('homeAtt').innerHTML=out;
+  // 作业
+  const hw=c.assignments.find(a=>a.date===d);
+  if(hw){
+    let j=0,w=0,uc=0,miss=[];
+    c.students.forEach(s=>{const r=hw.records[s.id];if(!r||r.sb==='×'){w++;miss.push(s.name)}else if(r.sb==='△')uc++;else j++;});
+    out=`<div class="stat-cards"><div class="stat"><div class="lb">已交</div><b>${j}</b></div><div class="stat"><div class="lb">未交</div><b>${w}</b></div><div class="stat"><div class="lb">未完成</div><b>${uc}</b></div></div>`;
+    if(miss.length)out+=`<div style="margin-top:8px;font-size:13px">未交：<span class="tag red">${miss.map(esc).join('</span> <span class="tag red">')}</span></div>`;
+    out+=`<div style="margin-top:6px;font-size:12px;color:var(--mut)">作业：${esc(hw.content)}</div>`;
+  }else out='<div class="stat-cards"><div class="stat" style="grid-column:1/-1"><div class="lb">今日作业</div><b>未登记</b></div></div>';
+  document.getElementById('homeHw').innerHTML=out;
+  // 卫生（按组/区域，不再按星期）
+  out=c.duty.length?`<div style="font-size:12px;color:var(--mut);margin-bottom:4px">共 ${c.duty.length} 个区域安排</div>`+c.duty.slice(0,4).map(x=>`<div class="duty-group"><b>${esc(x.group||'')}</b> · ${esc(x.area)}<div style="font-size:12px;margin-top:2px">${esc(x.names)}</div></div>`).join('')+'<div style="margin-top:4px;font-size:12px;color:var(--mut)">全部安排见「小组建设-卫生安排」</div>':'<div class="stat-cards"><div class="stat" style="grid-column:1/-1"><div class="lb">卫生安排</div><b>未安排</b></div></div>';
+  document.getElementById('homeDuty').innerHTML=out;
+  // 课表
+  const key={周一:'Mon',周二:'Tue',周三:'Wed',周四:'Thu',周五:'Fri'}[wd];
+  const sch=c.schedule||{};const srows=Array.isArray(sch.rows)?sch.rows:Array.from({length:7},(_,i)=>({name:'第'+(i+1)+'节',time:''}));
+  const sched=(sch.grid?sch.grid[key]:sch[key])||[];
+  out='<div style="margin-bottom:6px"><button class="btn sm ghost" onclick="openTodaySched(\''+key+'\')">修改今日课表</button></div>'+(sched.length?`<table><tr><th>节次</th><th>时间</th><th>科目</th></tr>${sched.map((s,i)=>`<tr><td>${esc(srows[i]?srows[i].name:'第'+(i+1)+'节')}</td><td>${esc(srows[i]?srows[i].time:'')}</td><td>${esc(s)}</td></tr>`).join('')}</table>`:'<div style="color:var(--mut)">今日暂无课表，点上方修改填写</div>');
+  document.getElementById('homeSchedule').innerHTML=out;
+  // 今日事项
+  refreshTodoTagSel();
+  let td=c.todos.find(t=>t.date===d);
+  if(!td){td={date:d,items:[{t:'学生出勤情况清点与记录',done:false},{t:'作业布置、批改与登记',done:false}]};c.todos.push(td);save();}
+  document.getElementById('homeTodo').innerHTML=td.items.map((it,i)=>todoItemHTML(it,i,d)).join('')||'<div style="color:var(--mut);font-size:13px">暂无事项，在上方记一条，或从一句话速记自动添加</div>';
+}
+function toggleTodo(date,i){const c=cur();const td=c.todos.find(t=>t.date===date);if(td){td.items[i].done=!td.items[i].done;save();renderHome();renderTodos();}}
+
+/* ---------- 班级公约 ---------- */
+function renderConvention(){
+  const c=cur();const cv=document.getElementById('conventionView');
+  let h='';
+  if(c.convention.text)h+=`<div style="white-space:pre-wrap;background:#fafbff;border-radius:8px;padding:12px;font-size:13px">${esc(c.convention.text)}</div>`;
+  if(c.convention.rules.length){h+='<table style="margin-top:10px"><tr><th>场景</th><th>项目</th><th>类型</th><th>分值</th><th>操作</th></tr>'+c.convention.rules.map((r,i)=>`<tr><td>${esc(r.scene)}</td><td>${esc(r.item)}</td><td class="tag ${r.type==='加'?'green':'red'}">${r.type}</td><td>${r.score}</td><td><button class="btn sm ghost" onclick="delRule(${i})">删</button></td></tr>`).join('')+'</table>';}
+  h+=`<div style="margin-top:10px"><input style="width:90px" id="rScene" placeholder="场景"><input style="width:120px" id="rItem" placeholder="项目"><select id="rType" style="width:70px"><option>加</option><option>扣</option></select><input style="width:60px" id="rScore" type="number" value="1"><button class="btn sm" onclick="addRule()">+ 制度</button></div>`;
+  cv.innerHTML=h;
+}
+function addRule(){const c=cur();const s=document.getElementById('rScene').value,i=document.getElementById('rItem').value,t=document.getElementById('rType').value,sc=document.getElementById('rScore').value;if(!i)return;c.convention.rules.push({scene:s||'其他',item:i,type:t,score:Number(sc)||1});save();renderConvention();}
+function delRule(i){confirmBox('确认删除这条制度？',()=>{cur().convention.rules.splice(i,1);save();renderConvention();});}
+function editConvention(){const c=cur();showModal(`<h3>编辑班级公约</h3><textarea id="convText" rows="12" style="margin:10px 0">${esc(c.convention.text)}</textarea><div style="text-align:right"><button class="btn ghost" onclick="hideModal()">取消</button> <button class="btn" onclick="saveConvention()">保存</button></div>`);}
+function saveConvention(){cur().convention.text=document.getElementById('convText').value;save();hideModal();renderConvention();}
+function importConvention(){document.getElementById('convFile').click();}
+async function loadConventionFile(e){const f=e.target.files[0];if(!f)return;const name=(f.name||'').toLowerCase();
+  if(name.endsWith('.docx')){try{const text=await extractDocx(f);cur().convention.text=text;save();renderConvention();alert('Word 文档已导入（提取 '+text.length+' 字）');}catch(err){alert('Word 解析失败：'+err.message);}e.target.value='';return;}
+  const r=new FileReader();r.onload=ev=>{cur().convention.text=String(ev.target.result);save();renderConvention();alert('文档已导入');};r.readAsText(f,'utf-8');e.target.value='';}
+
+/* ========== 通用文件导入（支持 Excel/CSV/Word表格） ========== */
+function unzipEntry(buf,name){const u8=new Uint8Array(buf);let off=0;
+  const rd16=()=>{const v=(u8[off]|u8[off+1]<<8);off+=2;return v;};
+  const rd32=()=>{const v=(u8[off]|u8[off+1]<<8|u8[off+2]<<16|u8[off+3]<<24)>>>0;off+=4;return v;};
+  if(rd32()!==0x04034b50)return Promise.reject(new Error('不是有效的文件'));off=0;
+  while(off<u8.length){const sig=rd32();if(sig!==0x04034b50)break;rd16();rd16();const method=rd16();rd16();rd16();rd32();const comp=rd32();const ucomp=rd32();const nl=rd16();const el=rd16();const fn=new TextDecoder().decode(u8.slice(off,off+nl));off+=nl+el;
+    const data=u8.slice(off,off+comp);off+=comp;
+    if(fn===name){if(method===8){const dd=new Uint8Array(data);if(window.pako&&pako.inflateRaw){try{return Promise.resolve(pako.inflateRaw(dd));}catch(e){console.error('pako inflate fail',e);}}if(typeof DecompressionStream!=='undefined'){const ds=new DecompressionStream('deflate-raw');const st=new Blob([dd]).stream().pipeThrough(ds);return new Response(st).arrayBuffer().then(b=>new Uint8Array(b));}return Promise.reject(new Error('解压失败'));}return Promise.resolve(data);}}
+  return Promise.reject(new Error('未找到 '+name));}
+function xmlUnescape(s){return String(s||'').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&apos;/g,"'").replace(/&amp;/g,'&');}
+async function unzipXml(buf,name){return new TextDecoder().decode(await unzipEntry(buf,name));}
+async function parseXlsx(buf){
+  let ss=[];
+  try{const sxml=await unzipXml(buf,'xl/sharedStrings.xml');
+    ss=[...sxml.matchAll(/<si>([\s\S]*?)<\/si>/g)].map(m=>{const tn=[...m[1].matchAll(/<t[^>]*>([\s\S]*?)<\/t>/g)];return xmlUnescape(tn.map(x=>x[1]).join(''));});
+  }catch(e){}
+  const x=await unzipXml(buf,'xl/worksheets/sheet1.xml');
+  const rows=[];
+  for(const m of [...x.matchAll(/<row[^>]*r="(\d+)"[^>]*>([\s\S]*?)<\/row>/g)]){
+    const row=[];const cells=[...m[2].matchAll(/<c r="([A-Z]+)\d+"([^>]*)>([\s\S]*?)<\/c>/g)];
+    cells.forEach(cm=>{const col=cm[1];let ci=0;for(let k=0;k<col.length;k++)ci=ci*26+(col.charCodeAt(k)-64);ci--;
+      const attr=cm[2];const t=(attr.match(/t="([^"]+)"/)||[])[1];const v=(cm[3].match(/<v>([\s\S]*?)<\/v>/)||[])[1];
+      while(row.length<ci)row.push('');
+      if(t==='s')row[ci]=ss[Number(v)]!=null?ss[Number(v)]:'';
+      else if(t==='inlineStr'){const is=(cm[3].match(/<is>([\s\S]*?)<\/is>/)||[])[1]||'';const t2=[...is.matchAll(/<t[^>]*>([\s\S]*?)<\/t>/g)].map(x=>x[1]).join('');row[ci]=xmlUnescape(t2);}
+      else row[ci]=v!=null?xmlUnescape(v).replace(/\s+$/,''):'';
+    });
+    rows.push(row);
+  }
+  return rows.filter(r=>r.some(c=>c!==''));
+}
+async function parseDocxTable(buf){
+  const x=await unzipXml(buf,'word/document.xml');
+  const tbls=[...x.matchAll(/<w:tbl>([\s\S]*?)<\/w:tbl>/g)];
+  if(tbls.length){const rows=[];
+    tbls.forEach(tm=>{[...tm[1].matchAll(/<w:tr[ >]([\s\S]*?)<\/w:tr>/g)].forEach(trm=>{
+      const row=[...trm[1].matchAll(/<w:tc>([\s\S]*?)<\/w:tc>/g)].map(tcm=>{const ts=[...tcm[1].matchAll(/<w:t(?:\s[^>]*)?>([\s\S]*?)<\/w:t>/g)];return xmlUnescape(ts.map(x=>x[1]).join('')).replace(/\s+/g,' ').trim();});
+      rows.push(row);});});
+    return rows.filter(r=>r.some(c=>c!==''));
+  }
+  const rows=[];let cur='';
+  [...x.matchAll(/<w:p[ >]([\s\S]*?)<\/w:p>|<w:br[^>]*\/>|<w:t(?:\s[^>]*)?>([\s\S]*?)<\/w:t>/g)].forEach(m=>{
+    if(m[0].startsWith('<w:p')){rows.push(cur.split(/\t|，|,/).map(s=>s.trim()));cur='';}
+    else if(m[0].startsWith('<w:br'))cur+='\n';
+    else cur+=m[2]||'';
+  });
+  if(cur)rows.push(cur.split(/\t|，|,/).map(s=>s.trim()));
+  const out=rows.filter(r=>r.some(c=>c!==''));
+  if(!out.length)throw new Error('Word中没有可导入的表格');
+  return out;
+}
+function parseCSVText(text){const rows=[];let row=[],cur='',inq=false;const s=String(text||'').replace(/^\uFEFF/,'');
+  for(let i=0;i<s.length;i++){const ch=s[i];
+    if(inq){if(ch==='"'){if(s[i+1]==='"'){cur+='"';i++;}else inq=false;}else cur+=ch;}
+    else if(ch==='"')inq=true;
+    else if(ch===','||ch==='，'){row.push(cur.trim());cur='';}
+    else if(ch==='\n'){row.push(cur.trim());row[0]||row.length>1?rows.push(row):0;row=[];cur='';}
+    else if(ch!=='\r')cur+=ch;}
+  if(row.length||cur!==''){row.push(cur.trim());rows.push(row);}
+  return rows.filter(r=>r.length&&r.some(c=>c!==''));}
+async function readTabular(f){const name=(f.name||'').toLowerCase();
+  const buf=await f.arrayBuffer();
+  if(name.endsWith('.xlsx'))return parseXlsx(buf);
+  if(name.endsWith('.docx'))return parseDocxTable(buf);
+  const txt=new TextDecoder('utf-8').decode(buf);
+  return parseCSVText(txt);}
+
+/* ---------- 成绩 ---------- */
+async function extractDocx(file){const buf=await file.arrayBuffer();let xml='';
+  try{xml=await extractDocxXml(buf);}catch(e){xml='';}
+  if(!xml){const txt=new TextDecoder('utf-8').decode(buf);if(txt.includes('<w:document'))xml=txt;}
+  if(!xml)throw new Error('未找到正文');
+  const tmp=document.createElement('div');tmp.innerHTML=xml.replace(/<w:tab[^>]*\/>/g,'\t').replace(/<w:br[^>]*\/>/g,'\n');
+  let text='';const walk=n=>{n.childNodes.forEach(ch=>{if(ch.nodeType===3)text+=ch.nodeValue;else if(ch.nodeName==='W:P'||ch.nodeName==='w:p'){walk(ch);text+='\n';}else if(ch.nodeName==='W:T'||ch.nodeName==='w:t'){text+=ch.textContent;}else walk(ch);});};walk(tmp);
+  return text.replace(/\n{2,}/g,'\n').trim();}
+async function extractDocxXml(buf){const u8=new Uint8Array(buf);let off=0;const rd16=()=>{const v=(u8[off]|u8[off+1]<<8);off+=2;return v;};const rd32=()=>{const v=(u8[off]|u8[off+1]<<8|u8[off+2]<<16|u8[off+3]<<24)>>>0;off+=4;return v;};
+  while(off<u8.length){const sig=rd32();if(sig!==0x04034b50)break;rd16();rd16();const method=rd16();rd16();rd16();rd32();const comp=rd32();const ucomp=rd32();const nl=rd16();const el=rd16();const fn=new TextDecoder().decode(u8.slice(off,off+nl));off+=nl+el;
+    if(fn==='word/document.xml'){let data=u8.slice(off,off+comp);if(method===8){const dd=new Uint8Array(data);if(window.pako&&pako.inflateRaw){try{data=pako.inflateRaw(dd);}catch(e){console.error('pako inflate fail',e);data=dd;}}else if(typeof DecompressionStream!=='undefined'){const ds=new DecompressionStream('deflate-raw');const st=new Blob([dd]).stream().pipeThrough(ds);data=new Uint8Array(await new Response(st).arrayBuffer());}}return new TextDecoder().decode(data);}off+=comp;}
+  throw new Error('未找到正文');}
+
+/* ---------- 班干部 ---------- */
+function renderCadres(){const c=cur();const box=document.getElementById('cadreList');
+  const rows=c.cadres.map((cd,i)=>{const st=c.students.find(s=>s.id===cd.sid);return `<tr><td>${esc(cd.post)}</td><td>${st?esc(st.name):'未选'}</td><td>${esc(cd.duty)}</td><td><button class="btn sm ghost" onclick="editCadre(${i})">编辑</button> <button class="btn sm ghost" onclick="delCadre(${i})">删</button></td></tr>`;}).join('');
+  box.innerHTML=`<table><tr><th>岗位</th><th>姓名</th><th>主要职责</th><th>操作</th></tr>${rows}</table>`;}
+function addCadre(){editCadre(-1);}
+function editCadre(i){const c=cur();const cd=i>=0?c.cadres[i]:{post:'',sid:'',duty:''};
+  const opts=c.students.map(s=>`<option value="${s.id}" ${cd.sid===s.id?'selected':''}>${esc(s.name)}</option>`).join('');
+  showModal(`<h3>${i>=0?'编辑':'添加'}班干部</h3><div style="margin:10px 0">岗位：<input id="cdPost" value="${esc(cd.post)}"><br><br>学生：<select id="cdSid">${opts}</select><br><br>职责：<input id="cdDuty" style="width:100%" value="${esc(cd.duty)}"><br><br><div style="text-align:right"><button class="btn ghost" onclick="hideModal()">取消</button> <button class="btn" onclick="saveCadre(${i})">保存</button></div></div>`);}
+function saveCadre(i){const c=cur();const v={post:document.getElementById('cdPost').value,sid:document.getElementById('cdSid').value,duty:document.getElementById('cdDuty').value};if(i>=0)c.cadres[i]=v;else c.cadres.push(v);save();hideModal();renderCadres();}
+function delCadre(i){confirmBox('确认删除该岗位？',()=>{cur().cadres.splice(i,1);save();renderCadres();});}
+
+/* ---------- 座位表 ---------- */
+let selSeat=null;
+function pickSeat(sid){selSeat=(selSeat===sid)?null:sid;renderSeats();}
+function seatTap(i){
+  const c=cur();const g=c.seats.grid;const sid=g[i];
+  if(selSeat){pushSeatUndo();const old=g.indexOf(selSeat);if(old>=0)g[old]=null;g[i]=selSeat;selSeat=null;save();renderSeats();return;}
+  if(sid){selSeat=sid;renderSeats();}
+}
+function fmtH(h){h=String(h==null?'':h).trim();if(!h)return '';if(/cm$/i.test(h)||/m$/i.test(h)||/厘米/.test(h))return h;if(/^\d+(\.\d+)?$/.test(h))return h+'cm';return h;}
+const seatUndo=[];
+function pushSeatUndo(){seatUndo.push(JSON.stringify(cur().seats.grid));if(seatUndo.length>20)seatUndo.shift();}
+function undoSeat(){if(!seatUndo.length){toast('没有可撤销的操作');return;}cur().seats.grid=JSON.parse(seatUndo.pop());save();renderSeats();toast('已撤销上一步');}
+function renderSeats(){
+  const c=cur();const r=Math.max(1,Math.min(12,parseInt(document.getElementById('seatRows').value)||6));const co=Math.max(1,Math.min(12,parseInt(document.getElementById('seatCols').value)||6));
+  c.seats.rows=r;c.seats.cols=co;save();
+  const g=c.seats.grid;while(g.length<r*co)g.push(null);
+  const box=document.getElementById('seatBox');
+  box.innerHTML=`<div class="seat-wrap"><div class="seat-main"><div class="seat-stage">讲 台</div><div class="seat-grid" style="grid-template-columns:repeat(${co},1fr)">${g.slice(0,r*co).map((sid,i)=>{
+    const st=c.students.find(s=>s.id===sid);
+    if(st){const hl=selSeat===st.id?' border:2px solid var(--pri);background:#eaf0fe':'';
+      const h=fmtH(st.height);
+      return `<div class="seat" style="${h?'flex-direction:column;':''}${hl}" draggable="true" id="seat-${i}" ondragstart="dragSeat(event,'${st.id}')" ondragover="event.preventDefault()" ondrop="dropSeat(event,${i})" onclick="seatTap(${i})" ondblclick="clearSeat(${i})" title="点击选中/移动，双击移除">${h?`<div class="seat-name">${esc(st.name)}</div><div class="seat-h">${esc(h)}</div>`:`<div class="seat-name">${esc(st.name)}</div>`}</div>`;}
+    return `<div class="seat empty"${selSeat?' style="cursor:pointer"':''} draggable="true" ondragover="event.preventDefault()" ondrop="dropSeat(event,${i})" onclick="seatTap(${i})">${selSeat?'放入':'空'}</div>`;
+  }).join('')}</div></div><div class="seat-door">门</div></div>`;
+  const pool=c.students.filter(s=>!g.includes(s.id));
+  box.innerHTML+=`<div style="margin-top:12px;border-top:1px dashed var(--bor);padding-top:10px"><div style="font-size:12px;color:var(--mut);margin-bottom:6px">未入座学生：点击选中再点座位格放入（手机也能用），或电脑上直接拖动</div><div id="seatPool">${pool.map(s=>`<span class="stu-pill" style="${selSeat===s.id?'background:var(--pri);color:#fff':''};cursor:pointer" draggable="true" ondragstart="dragSeat(event,'${s.id}')" onclick="pickSeat('${s.id}')">${esc(s.name)}</span>`).join('')||'<span style="color:var(--mut)">全部已入座</span>'}</div></div>`;
+}
+function dragSeat(e,sid){e.dataTransfer.setData('text/plain',sid);}
+function dropSeat(e,i){e.preventDefault();const sid=e.dataTransfer.getData('text/plain');if(!sid)return;pushSeatUndo();const c=cur();const g=c.seats.grid;const old=g.indexOf(sid);if(old>=0)g[old]=null;g[i]=sid;save();renderSeats();}
+function clearSeat(i){pushSeatUndo();const c=cur();c.seats.grid[i]=null;save();renderSeats();}
+function saveSeats(){save();renderSeats();toast('座位表已保存');}
+function autoSeat(mode){
+  pushSeatUndo();
+  const c=cur();const r=c.seats.rows,co=c.seats.cols;
+  let list=c.students.slice();
+  if(mode==='height')list.sort((a,b)=>(parseFloat(b.height)||0)-(parseFloat(a.height)||0));
+  else list.sort(()=>Math.random()-.5);
+  // 前排矮后排高：模式为height时反转
+  if(mode==='height')list.reverse();
+  const g=new Array(r*co).fill(null);list.forEach((s,i)=>{if(i<g.length)g[i]=s.id;});
+  c.seats.grid=g;save();renderSeats();toast(mode==='height'?'已按身高排座（前排矮后排高）':'已随机排座');
+}
+async function loadSeatStudentFile(e){const f=e.target.files[0];if(!f)return;let rows=[];try{rows=await readTabular(f);}catch(err){alert('导入失败：'+err.message);e.target.value='';return;}
+  const c=cur();let n=0;
+  rows.forEach(p=>{if(p.length<2||String(p[0]).trim()==='学号')return;if(c.students.some(s=>s.no===String(p[0]).trim()))return;c.students.push({id:uid(),no:String(p[0]).trim(),name:String(p[1]).trim(),sex:String(p[2]||''),birth:String(p[3]||''),height:String(p[4]||''),addr:String(p[5]||''),pname:String(p[6]||''),pphone:String(p[7]||'')});n++;});
+  save();renderSeats();renderStudents();toast('已导入 '+n+' 名学生并进入座位表'+(n?'':'，请检查文件格式（需含 学号,姓名 两列）'));e.target.value='';}
+
+/* ---------- 小组 ---------- */
+function renderGroups(){const c=cur();const box=document.getElementById('groupList');
+  box.innerHTML=c.groups.map((g,gi)=>{
+    const members=g.mids.map(mid=>{const s=c.students.find(x=>x.id===mid);return s?esc(s.name):'';}).filter(Boolean);
+    const ld=c.students.find(x=>x.id===g.leaderId);
+    const leaderName=g.leaderName||(ld?ld.name:'');
+    const idx=g.idx?('第'+g.idx+'组'):'';
+    return `<div class="card" style="border-left:4px solid ${g.color}"><b>${idx?idx+' · ':''}${esc(g.name)}</b> <button class="btn sm ghost" onclick="editGroup(${gi})">编辑</button> <button class="btn sm ghost" onclick="delGroup(${gi})">删</button>${leaderName?`<div style="margin-top:6px;font-size:13px">组长：<span class="tag" style="background:${g.color};color:#fff">${esc(leaderName)}</span></div>`:''}<div style="margin-top:8px">${members.map(m=>`<span class="stu-pill">${m}</span>`).join('')||'暂无成员'}</div></div>`;
+  }).join('')||'<div style="color:var(--mut)">暂无小组，点"+"添加</div>';
+}
+function addGroup(){editGroup(-1);}
+function editGroup(gi){const c=cur();const g=gi>=0?c.groups[gi]:{name:'',color:'#8d9db6',mids:[],idx:''};
+  const opts=c.students.map(s=>`<label style="display:inline-block;margin:4px"><input type="checkbox" data-sid="${s.id}" ${g.mids.includes(s.id)?'checked':''}> ${esc(s.name)}</label>`).join('');
+  const ld=c.students.find(x=>x.id===g.leaderId);
+  const curLeader=ld?ld.id:(g.leaderName?g.leaderName:'');
+  const leaderOpts=`<option value="">（无）</option>`+c.students.map(s=>`<option value="${s.id}" ${curLeader===s.id?'selected':''}>${esc(s.name)}</option>`).join('');
+  showModal(`<h3>${gi>=0?'编辑':'添加'}小组</h3><div style="margin:10px 0">组序号：<input id="gIdx" value="${esc(g.idx||'')}" placeholder="如：1" style="width:60px"> 组名：<input id="gName" value="${esc(g.name)}"> 颜色：<input type="color" id="gColor" value="${g.color}"><br><br>组长：<select id="gLeader">${leaderOpts}</select><br><br>成员：<div>${opts}</div><br><div style="text-align:right"><button class="btn ghost" onclick="hideModal()">取消</button> <button class="btn" onclick="saveGroup(${gi})">保存</button></div></div>`);}
+function saveGroup(gi){const c=cur();const mids=[...document.querySelectorAll('#modalBox input[data-sid]:checked')].map(x=>x.dataset.sid);
+  const lid=document.getElementById('gLeader').value;const lds=c.students.find(x=>x.id===lid);
+  const v={name:document.getElementById('gName').value,idx:document.getElementById('gIdx').value.trim(),color:document.getElementById('gColor').value,mids,leaderId:lid,leaderName:lds?lds.name:(lid?lid:'')};
+  if(gi>=0)c.groups[gi]=v;else {v.id=uid();c.groups.push(v);}save();hideModal();renderGroups();}
+function delGroup(gi){confirmBox('确认删除该小组？',()=>{cur().groups.splice(gi,1);save();renderGroups();});}
+function autoGroup(){const c=cur();const n=Math.max(2,Math.min(8,c.students.length));const gs=Math.max(2,Math.min(6,Math.ceil(c.students.length/n)));c.groups=[];
+  const colors=['#8d9db6','#a3b18a','#b5828c','#c2a878','#9b8ea8','#7fa8a0'];
+  c.students.forEach((s,i)=>{const gi=i%gs;if(!c.groups[gi])c.groups[gi]={id:uid(),name:(gi+1)+'组',idx:gi+1,color:colors[gi%colors.length],mids:[],leaderId:'',leaderName:''};c.groups[gi].mids.push(s.id);});
+  save();renderGroups();}
+
+/* ---------- 卫生安排 ---------- */
+function renderDuty(){const c=cur();const box=document.getElementById('dutyList');
+  box.innerHTML=c.duty.length?c.duty.map(x=>`<div class="duty-group"><b>${esc(x.group||'')}</b> · ${esc(x.area)} <button class="btn sm ghost" style="float:right" onclick="delDuty(${c.duty.indexOf(x)})">删</button><div style="font-size:13px;margin-top:3px">${esc(x.names)}</div></div>`).join('')+'<div class="toolbar" style="margin-top:10px"><button class="btn sm" onclick="addDuty()">+ 添加区域</button></div>':'<div style="color:var(--mut)">暂无卫生安排，点下方添加</div><div class="toolbar" style="margin-top:10px"><button class="btn sm" onclick="addDuty()">+ 添加区域</button></div>';
+}
+function addDuty(){const c=cur();const gnames=Array.from(new Set((c.groups||[]).map(g=>g.name||('第'+(g.no||'')+'组')).filter(Boolean)));
+  const gopts=gnames.map(g=>`<option>${g}</option>`).join('')+'<option value="__custom">自定义组名</option>';
+  showModal(`<h3>添加卫生安排</h3><div style="margin:10px 0">组：<select id="dGroup" onchange="dutyGroupCustom(this)">${gopts}</select>（选小组或自定义）<br><br>区域：<input id="dArea" placeholder="如：教室地面"><br><br>学生名单（逗号分隔）：<input id="dNames" style="width:100%" placeholder="王小明,李恩颖"><br><br><div style="text-align:right"><button class="btn ghost" onclick="hideModal()">取消</button> <button class="btn" onclick="saveDuty()">保存</button></div></div>`);}
+function dutyGroupCustom(sel){if(sel.value!=='__custom')return;const wrap=document.createElement('input');wrap.id='dGroup';wrap.placeholder='如：第1组';sel.replaceWith(wrap);}
+function saveDuty(){const c=cur();const a=document.getElementById('dArea').value.trim();const n=document.getElementById('dNames').value.trim();if(!a||!n){toast('请填写区域和学生名单');return;}c.duty.push({group:document.getElementById('dGroup').value,area:a,names:n});save();hideModal();renderDuty();renderHome();}
+function delDuty(i){confirmBox('确认删除这条卫生安排？',()=>{cur().duty.splice(i,1);save();renderDuty();renderHome();});}
+
+/* ---------- 学生名单 ---------- */
+function renderStudents(){const c=cur();const box=document.getElementById('studentList');
+  box.innerHTML=c.students.length?`<div class="stu-grid">${c.students.map((s,i)=>`<div class="stu-card" onclick="editStudent(${i})"><span class="no">${esc(s.no||'')}</span><div class="nm">${esc(s.name)}</div><div class="sx">${esc(s.sex||'')}</div></div>`).join('')}</div><div style="margin-top:8px;font-size:12px;color:var(--mut)">共 ${c.students.length} 人 · 点击方框可编辑/删除</div>`:'<div style="color:var(--mut)">暂无学生，点击「导入文件」或「+ 添加学生」</div>';
+}
+function addStudent(){editStudent(-1);}
+function editStudent(i){const c=cur();const s=i>=0?c.students[i]:{no:c.students.length+1,name:'',sex:'男',birth:'',height:'',addr:'',pname:'',pphone:'',photo:''};
+  showModal(`<h3>${i>=0?'编辑':'添加'}学生</h3><div style="margin:10px 0">
+  学号：<input id="sNo" type="number" value="${s.no}"> 姓名：<input id="sName" value="${esc(s.name)}"><br><br>
+  性别：<select id="sSex"><option ${s.sex==='男'?'selected':''}>男</option><option ${s.sex==='女'?'selected':''}>女</option></select>
+  出生日期：<input id="sBirth" type="date" value="${s.birth}"> 身高：<input id="sHeight" value="${esc(s.height)}" style="width:70px"><br><br>
+  家庭住址：<input id="sAddr" style="width:100%" value="${esc(s.addr)}"><br><br>
+  家长姓名：<input id="sPname" value="${esc(s.pname)}"> 家长电话：<input id="sPphone" value="${esc(s.pphone)}"><br><br>
+  照片：<input type="file" id="sPhoto" accept="image/*" onchange="previewStuPhoto(this)"><div id="sPhotoPrev">${s.photo?`<img class="photo" src="${s.photo}">`:''}</div><br>
+  <div style="text-align:right">${i>=0?'<button class="btn danger ghost" onclick="delStudent(\''+s.id+'\')">删除</button> ':''}<button class="btn ghost" onclick="hideModal()">取消</button> <button class="btn" onclick="saveStudent(${i})">保存</button></div></div>`);}
+let sPhotoData='';
+function previewStuPhoto(inp){const f=inp.files[0];if(!f)return;compressImg(f,data=>{sPhotoData=data;document.getElementById('sPhotoPrev').innerHTML=`<img class="photo" src="${data}">`;});}
+function saveStudent(i){const c=cur();const prev=i>=0?c.students[i]:{};const v={id:prev.id||uid(),no:document.getElementById('sNo').value,name:document.getElementById('sName').value,sex:document.getElementById('sSex').value,birth:document.getElementById('sBirth').value,height:document.getElementById('sHeight').value,addr:document.getElementById('sAddr').value,pname:document.getElementById('sPname').value,pphone:document.getElementById('sPphone').value,photo:sPhotoData||prev.photo||''};sPhotoData='';
+  if(i>=0)c.students[i]=v;else c.students.push(v);save();hideModal();renderStudents();renderHome();}
+function delStudent(sid){confirmBox('确认删除该学生？',()=>{const c=cur();c.students=c.students.filter(s=>s.id!==sid);save();hideModal();renderAll();});}
+async function loadStudentFile(e){const f=e.target.files[0];if(!f)return;let rows=[];try{rows=await readTabular(f);}catch(err){alert('导入失败：'+err.message);e.target.value='';return;}
+  const c=cur();let n=0;
+  rows.forEach(p=>{if(p.length<2||p[0]==='学号')return;c.students.push({id:uid(),no:String(p[0]).trim(),name:String(p[1]).trim(),sex:String(p[2]||''),birth:String(p[3]||''),height:String(p[4]||''),addr:String(p[5]||''),pname:String(p[6]||''),pphone:String(p[7]||'')});n++;});
+  save();renderStudents();alert('已导入 '+n+' 名学生'+(n?'':'，请检查文件格式（需含 学号,姓名 两列）'));e.target.value='';}
+function exportStudents(){const c=cur();let csv='学号,姓名,性别,出生日期,身高,住址,家长姓名,家长电话\n';c.students.forEach(s=>csv+=[s.no,s.name,s.sex,s.birth,s.height,s.addr,s.pname,s.pphone].join(',')+'\n');download('学生名单_'+c.name+'.csv',csv);}
+function clearStudents(){confirmBox('确认清空全部学生名单？此操作可通过「撤销」找回。',()=>{const c=cur();c.students=[];c.groups=[];c.seats={rows:6,cols:6,grid:[]};c.cadres=[];save();renderAll();alert('名单已清空，可以开始导入真实数据');});}
+function clearDemo(){showModal(`<h3>清空示例数据</h3><div style="margin:10px 0;color:var(--red);font-size:13px">将删除学生名单、小组、座位、班干部、卫生、成绩、课表、考勤、作业、日志等全部内容，仅保留班级名称。此操作不可撤销！</div><div style="text-align:right"><button class="btn ghost" onclick="hideModal()">取消</button> <button class="btn danger" onclick="doClearDemo()">确认清空</button></div>`);}
+function doClearDemo(){
+  try{localStorage.setItem('tWorkbench_noDemo','1');}catch(e){}
+  demoCleared=true;
+  const c=cur();c.students=[];c.groups=[];c.seats={rows:6,cols:6,grid:[]};c.convention={text:'',rules:[]};c.cadres=[];c.duty=[];c.attendance=[];c.assignments=[];c.exams=[];c.rewards=[];c.contacts=[];c.commLogs=[];c.todos=[];c.schedule={Mon:[],Tue:[],Wed:[],Thu:[],Fri:[]};c.workLogs=[];
+  save();renderAll();hideModal();alert('示例数据已清空，现在可以逐个导入你的真实文件');
+}
+async function loadCadreFile(e){const f=e.target.files[0];if(!f)return;let rows=[];try{rows=await readTabular(f);}catch(err){alert('导入失败：'+err.message);e.target.value='';return;}
+  const c=cur();let n=0;
+  rows.forEach(p=>{if(p.length<2||p[0]==='岗位')return;const st=c.students.find(s=>s.name===p[1]);c.cadres.push({post:p[0],sid:st?st.id:'',duty:p.slice(2).join(',')});n++;});
+  save();renderCadres();alert('已导入 '+n+' 条班干部记录'+(rows.some(x=>x[0]==='岗位')?'':'（未找到的学生会自动留空，可稍后编辑）'));e.target.value='';}
+async function loadDutyFile(e){const f=e.target.files[0];if(!f)return;let rows=[];try{rows=await readTabular(f);}catch(err){alert('导入失败：'+err.message);e.target.value='';return;}
+  const c=cur();let n=0;
+  rows.forEach(p=>{if(p.length<2||p[0]==='星期'||p[0]==='组'||p[0]==='组名')return;c.duty.push({group:p[0],area:p[1],names:p.slice(2).join(',')});n++;});
+  save();renderDuty();renderHome();alert('已导入 '+n+' 条卫生安排（格式：组,区域,学生名单）');e.target.value='';}
+async function loadScheduleFile(e){const f=e.target.files[0];if(!f)return;let rows=[];try{rows=await readTabular(f);}catch(err){alert('导入失败：'+err.message);e.target.value='';return;}
+  const c=cur();const s=schedInit(c);const map={周一:'Mon',周二:'Tue',周三:'Wed',周四:'Thu',周五:'Fri',星期一:'Mon',星期二:'Tue',星期三:'Wed',星期四:'Thu',星期五:'Fri',Mon:'Mon',Tue:'Tue',Wed:'Wed',Thu:'Thu',Fri:'Fri'};let n=0;
+  rows.forEach(p=>{if(p.length<3||!map[p[0]])return;const idx=parseInt(p[1])-1;const arr=s.grid[map[p[0]]];if(isNaN(idx)){arr.push(p[2]);}else{while(arr.length<=idx)arr.push('');arr[idx]=p[2];}n++;});
+  save();renderSchedule();renderHome();alert('已导入 '+n+' 条课表记录');e.target.value='';}
+async function loadGroupFile(e){const f=e.target.files[0];if(!f)return;let rows=[];try{rows=await readTabular(f);}catch(err){alert('导入失败：'+err.message);e.target.value='';return;}
+  const c=cur();let n=0;c.groups=[];
+  rows.forEach(p=>{if(p.length<2)return;const h0=String(p[0]).trim();if(h0==='组名'||h0==='组序号'||h0==='组号'||h0==='序号')return;
+    let idx='',name='',leader='',mids=[],color='#8d9db6';
+    if(/^\d+$/.test(h0)){ // 新格式：组序号,组名,组长,组员1,组员2...
+      idx=h0;name=String(p[1]).trim();leader=String(p[2]||'').trim();mids=p.slice(3).map(nm=>String(nm).trim()).filter(Boolean);
+    }else{ // 旧格式：组名,颜色,学生1,学生2...
+      name=h0;color=String(p[1]||'').trim()||'#8d9db6';mids=p.slice(2).map(nm=>String(nm).trim()).filter(Boolean);
+    }
+    if(leader)mids.unshift(leader);
+    const flat=[];mids.forEach(x=>String(x).split(/[,，、;；]/).forEach(y=>{y=y.trim();if(y)flat.push(y);}));
+    const mids2=flat.map(nm=>{const st=c.students.find(s=>s.name===nm);return st?st.id:'';}).filter(Boolean);
+    let leaderId='',leaderName='';
+    if(leader){const st=c.students.find(s=>s.name===leader);if(st){leaderId=st.id;leaderName=st.name;}else{leaderName=leader;}}
+    c.groups.push({id:uid(),idx,name,color,mids:mids2,leaderId,leaderName});n++;
+  });
+  save();renderGroups();renderStudents();renderHome();toast('已导入 '+n+' 个小组');e.target.value='';}
+let lastExportTSV='';
+function tableToTSV(html){try{const doc=new DOMParser().parseFromString(html,'text/html');const tbls=doc.querySelectorAll('table');if(!tbls.length)return html.replace(/<[^>]+>/g,' ').replace(/\s+/g,' ');return [...tbls].map(t=>[...t.querySelectorAll('tr')].map(tr=>[...tr.querySelectorAll('th,td')].map(c=>c.textContent.trim()).join('\t')).join('\n')).join('\n\n');}catch(e){return html.replace(/<[^>]+>/g,' ');}}
+function copyExportTSV(){if(!lastExportTSV){toast('没有可复制的内容');return;}if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(lastExportTSV).then(()=>toast('已复制表格内容，去粘贴即可')).catch(()=>showExportText());}else showExportText();}
+function showExportText(){showModal(`<h3>表格内容</h3><textarea readonly rows="10" style="width:100%">${esc(lastExportTSV)}</textarea><div style="font-size:12px;color:var(--mut);margin-top:4px">长按全选复制，粘贴到 WPS/备忘录即可</div><div style="text-align:right"><button class="btn" onclick="hideModal()">关闭</button></div>`);}
+function download(name,content,type){const b=new Blob([content],{type:type||'text/plain;charset=utf-8'});try{const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;a.click();URL.revokeObjectURL(a.href);}catch(e){}lastExportTSV=tableToTSV(content);showModal(`<h3>导出「${esc(name)}」</h3><div style="font-size:13px;line-height:1.8;margin:8px 0">已尝试下载文件：安卓看「文件管理-下载」，iPhone/iPad 看「文件 App-下载」。<br><b>如果在微信里没反应</b>：①用系统浏览器（Safari/Chrome）打开页面再导出；②或点下方按钮复制表格内容，直接粘贴到 WPS 表格/备忘录。</div><div style="margin:8px 0"><button class="btn" onclick="copyExportTSV()">复制表格内容</button> <button class="btn ghost" onclick="showExportText()">查看文本</button></div><div style="text-align:right"><button class="btn ghost" onclick="hideModal()">关闭</button></div>`);}
+
+/* ---------- 成绩 ---------- */
+function renderExams(){const c=cur();const box=document.getElementById('examList');
+  const sel=document.getElementById('examSel');
+  if(sel){sel.innerHTML='';c.exams.forEach((e,i)=>{const o=document.createElement('option');o.value=i;o.textContent=e.name;sel.appendChild(o);});if(c.exams.length)sel.value=c.exams.length-1;}
+  box.innerHTML=c.exams.map((e,ei)=>{
+    const subs=e.subjects||[];
+    const rows=c.students.map(s=>{const r=e.records[s.id]||{};return `<tr><td>${esc(s.name)}</td>${subs.map(sub=>`<td><input style="width:60px" value="${r[sub]??''}" onchange="setScore(${ei},'${s.id}','${sub}',this.value)"></td>`).join('')}</tr>`;}).join('');
+    return `<div style="margin-bottom:12px"><b>${esc(e.name)}</b>（${esc(e.date)}）<button class="btn sm ghost" onclick="delExam(${ei})">删</button>
+    <table><tr><th>姓名</th>${subs.map(s=>`<th>${esc(s)}</th>`).join('')}</tr>${rows}</table></div>`;
+  }).join('')||'<div style="color:var(--mut)">暂无成绩，点"+"添加考试或导入文件</div>';
+}
+function setScore(ei,sid,sub,v){const c=cur();const e=c.exams[ei];e.records[sid]=e.records[sid]||{};e.records[sid][sub]=v===''?null:Number(v);save();}
+function addExam(){showModal(`<h3>添加考试</h3><div style="margin:10px 0">考试名称：<input id="eName" placeholder="如：期中考试"><br><br>日期：<input id="eDate" type="date"><br><br>科目（逗号分隔）：<input id="eSubs" value="语文,数学,英语"><br><br><div style="text-align:right"><button class="btn ghost" onclick="hideModal()">取消</button> <button class="btn" onclick="saveExam()">创建</button></div></div>`);}
+function saveExam(){const c=cur();c.exams.push({name:document.getElementById('eName').value,date:document.getElementById('eDate').value,subjects:document.getElementById('eSubs').value.split(/[,，]/).map(x=>x.trim()).filter(Boolean),records:{}});save();hideModal();renderExams();}
+function delExam(i){confirmBox('删除该考试？',()=>{cur().exams.splice(i,1);save();renderExams();document.getElementById('aiResult').innerHTML='';});}
+async function loadScoreFile(e){const f=e.target.files[0];if(!f)return;let rows=[];try{rows=await readTabular(f);}catch(err){alert('导入失败：'+err.message);e.target.value='';return;}
+  const c=cur();
+  const head=rows[0]||[];
+  if(head[0].includes('学号'))head[0]='学号';
+  const subs=head.slice(2).filter(Boolean);
+  if(!subs.length){alert('未识别到科目列，请保证第一行为 学号,姓名,科目1,科目2...');e.target.value='';return;}
+  const exam={name:'导入成绩'+new Date().toLocaleDateString(),date:today(),subjects:subs,records:{}};
+  let inCnt=0;
+  rows.slice(1).forEach(p=>{const st=c.students.find(s=>String(s.no)===String(p[0]).trim()||s.name===String(p[1]||'').trim());if(!st)return;const rec={};subs.forEach((s,i)=>{const v=parseFloat(p[i+2]);if(!isNaN(v))rec[s]=v;});exam.records[st.id]=rec;if(Object.keys(rec).length){inCnt++;}});
+  c.exams.push(exam);save();renderExams();alert('已导入考试：'+exam.name+'（科目 '+subs.join('/')+'，录入 '+inCnt+' 人）');e.target.value='';}
+function aiAnalyze(){const c=cur();const sel=document.getElementById('examSel');const ei=sel&&sel.value!==''?Number(sel.value):c.exams.length-1;const e=c.exams[ei];if(!e){alert('请先添加考试');return;}
+  const subs=e.subjects||[];let hasScore=c.students.some(s=>{const r=e.records[s.id]||{};return subs.some(x=>r[x]!=null);});
+  if(!hasScore){alert('该考试还没有录入成绩，请先填写各科分数后再分析');return;}
+  let out='<div style="background:#f6f8ff;border-radius:10px;padding:14px;margin-top:10px"><h4 style="margin-bottom:8px">🤖 AI分析 · '+esc(e.name)+'</h4>';
+  subs.forEach(sub=>{
+    const vals=c.students.map(s=>(e.records[s.id]||{})[sub]).filter(v=>v!=null&&!isNaN(v));
+    if(!vals.length)return;
+    const avg=vals.reduce((a,b)=>a+b,0)/vals.length;const mx=Math.max(...vals),mn=Math.min(...vals);
+    const pass=vals.filter(v=>v>=60).length;const passRate=Math.round(pass/vals.length*100);
+    const top=Math.max(1,Math.round(vals.length*.2));
+    const rank=[...vals].sort((a,b)=>b-a);const thr=rank[top-1];
+    out+=`<div style="margin:8px 0"><b>${sub}</b>：平均 ${avg.toFixed(1)} 分，最高 ${mx}，最低 ${mn}，及格率 ${passRate}%</div>`;
+    const weak=c.students.filter(s=>{const v=(e.records[s.id]||{})[sub];return v!=null&&v<60;}).map(s=>s.name);
+    const good=c.students.filter(s=>{const v=(e.records[s.id]||{})[sub];return v!=null&&v>=thr;}).map(s=>s.name);
+    if(weak.length)out+=`<div style="font-size:13px;color:var(--red)">薄弱（&lt;60）：${weak.map(esc).join('、')}</div>`;
+    if(good.length)out+=`<div style="font-size:13px;color:var(--grn)">优秀（前${top}名）：${good.map(esc).join('、')}</div>`;
+  });
+  // 个人分析
+  out+='<div style="margin-top:10px;border-top:1px solid var(--bor);padding-top:8px"><b>学生个人分析</b></div>';
+  c.students.forEach(s=>{
+    const rec=e.records[s.id]||{};const has=subs.some(x=>rec[x]!=null);
+    if(!has)return;
+    const total=subs.reduce((a,x)=>a+(rec[x]||0),0);
+    const tRank=c.students.filter(st=>{const r=e.records[st.id]||{};return subs.some(x=>r[x]!=null);}).map(st=>subs.reduce((a,x)=>a+(e.records[st.id][x]||0),0)).sort((a,b)=>b-a);
+    const rk=tRank.indexOf(total)+1;
+    out+=`<div style="font-size:13px;padding:4px 0">· <b>${esc(s.name)}</b>：总分 ${total}，班级第 ${rk} 名</div>`;
+  });
+  out+='</div>';document.getElementById('aiResult').innerHTML=out;
+}
+
+/* ---------- 档案 ---------- */
+function renderProfiles(){const c=cur();const box=document.getElementById('profileList');
+  box.innerHTML=`<table><tr><th>照片</th><th>姓名</th><th>出生日期</th><th>家庭住址</th><th>家长/电话</th><th>操作</th></tr>${c.students.map((s,i)=>`<tr><td>${s.photo?`<img class="avatar" src="${s.photo}" onclick="viewPhoto('${s.id}')">`:'—'}</td><td>${esc(s.name)}</td><td>${esc(s.birth)}</td><td style="max-width:220px">${esc(s.addr)}</td><td>${esc(s.pname)} ${esc(s.pphone)}</td><td><button class="btn sm ghost" onclick="editStudent(${i})">编辑</button></td></tr>`).join('')}</table>`;
+}
+async function loadProfileFile(e){const f=e.target.files[0];if(!f)return;let rows=[];try{rows=await readTabular(f);}catch(err){alert('导入失败：'+err.message);e.target.value='';return;}
+  const c=cur();let n=0,miss=[];
+  rows.forEach((p,ri)=>{
+    if(ri===0&&String(p[0]||'').indexOf('学号')>=0)return;
+    if(p.length<2||!String(p[1]||'').trim())return;
+    const no=String(p[0]||'').trim(),name=String(p[1]||'').trim();
+    const st=c.students.find(s=>String(s.no)===no)||c.students.find(s=>s.name===name);
+    if(!st){miss.push(name||no);return;}
+    const set=(idx,key)=>{if(p[idx]!=null&&String(p[idx]).trim()!=='')st[key]=String(p[idx]).trim();};
+    set(2,'sex');set(3,'birth');set(4,'height');set(5,'addr');set(6,'pname');set(7,'pphone');
+    n++;
+  });
+  save();renderProfiles();renderStudents();alert('已更新 '+n+' 名学生档案'+(miss.length?'，未找到（请先导入学生名单）：'+miss.join('、'):''));e.target.value='';}
+
+/* ---------- 卡片折叠 ---------- */
+function toggleCard(key,el){
+  const card=el.closest('.card');const folded=card.classList.toggle('folded');
+  try{const k='tw_collapsed';let s={};try{s=JSON.parse(localStorage.getItem(k))||{};}catch(e){}
+  if(folded)s[key]=1;else delete s[key];localStorage.setItem(k,JSON.stringify(s));}catch(e){}
+}
+function initFold(){
+  let s={};try{s=JSON.parse(localStorage.getItem('tw_collapsed'))||{};}catch(e){}
+  document.querySelectorAll('.card.foldable').forEach(card=>{
+    const key=card.getAttribute('data-fold');if(s[key])card.classList.add('folded');
+  });
+}
+
+/* ---------- 奖惩 ---------- */
+function renderRewards(){const c=cur();const box=document.getElementById('rewardList');
+  box.innerHTML=c.rewards.slice().reverse().map((r,i)=>`<div class="note"><div class="date">${esc(r.date)} · ${r.type==='奖'?'<span class="tag green">表扬</span>':'<span class="tag red">违纪</span>'} ${r.score?`<span class="tag" style="background:${r.type==='奖'?'var(--grn)':'var(--red)'};color:#fff">${r.type==='奖'?'+':'-'}${esc(String(r.score))}分</span>`:''} <b>${esc(r.sname)}</b></div><div style="margin-top:6px">${esc(r.content)}</div></div>`).join('')||'<div style="color:var(--mut)">暂无奖惩记录</div>';
+}
+function addReward(){showModal(`<h3>记录奖惩</h3><div style="margin:10px 0">学生姓名：<input id="rwName" placeholder="手填学生姓名"><br><br>类型：<select id="rwType"><option>奖</option><option>罚</option></select> 加减分：<input id="rwScore" type="number" value="1" style="width:70px"><br><br>日期：<input id="rwDate" type="date" value="${today()}"><br><br>内容：<textarea id="rwContent" placeholder="记录表扬或违纪情况"></textarea><br><br><div style="text-align:right"><button class="btn ghost" onclick="hideModal()">取消</button> <button class="btn" onclick="saveReward()">保存</button></div></div>`);}
+function saveReward(){const c=cur();c.rewards.push({date:document.getElementById('rwDate').value||today(),sname:document.getElementById('rwName').value.trim(),type:document.getElementById('rwType').value,score:Math.max(0,parseInt(document.getElementById('rwScore').value)||1),content:document.getElementById('rwContent').value.trim()});save();hideModal();renderRewards();}
+
+/* ---------- 作业登记 ---------- */
+function renderHw(){const c=cur();const d=document.getElementById('hwDate').value||today();document.getElementById('hwDate').value=d;
+  const hw=c.assignments.find(a=>a.date===d);
+  if(hw)document.getElementById('hwContent').value=hw.content;
+  const box=document.getElementById('hwTableWrap');
+  const subs={sb:'',q:''};
+  if(hw){
+    const unsub=c.students.filter(s=>{const r=hw.records[s.id]||{};return r.sb!=='√';});
+    const unsubHtml=unsub.length?unsub.map(s=>`<span class="stu-pill" style="border-color:var(--red);color:var(--red)">${esc(s.name)}</span>`).join(''):'<span class="tag green">全部已交</span>';
+    box.innerHTML=`<div style="margin-bottom:8px;font-size:13px">📅 ${d} · ${esc(hw.content)}</div>
+    <div style="margin-bottom:8px;padding:8px;background:${unsub.length?'#fff3f3':'#f2faf2'};border-radius:8px;font-size:13px">未交名单（${unsub.length}人）：${unsubHtml} <button class="btn sm ghost" style="margin-left:6px" onclick="openUnsubSel('${d}')">选择未交</button></div>
+    <table><tr><th>学号</th><th>姓名</th><th>小组</th><th>提交</th><th>质量</th></tr>${
+    c.students.map(s=>{const r=hw.records[s.id]||{};const g=c.groups.find(x=>x.mids.includes(s.id));
+      return `<tr><td>${s.no}</td><td>${esc(s.name)}</td><td>${g?`<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${g.color};margin-right:4px"></span>${esc(g.name)}`:'—'}</td>
+      <td style="cursor:pointer" onclick="cycleSub('${d}','${s.id}')" title="点击切换：√已交 ×未交 △未完成">${r.sb==='×'?'<span class="tag red">×</span>':r.sb==='△'?'<span class="tag yellow">△</span>':r.sb==='√'?'<span class="tag green">√</span>':'—'}</td>
+      <td style="cursor:pointer" onclick="cycleQ('${d}','${s.id}')" title="点击切换质量">${r.q||'—'}</td></tr>`;}).join('')}</table>`;
+  }else box.innerHTML='<div style="color:var(--mut)">今天还没有登记作业，填好内容后点"保存/更新"</div>';
+  renderHwChart();renderHwStuSel();
+}
+function openUnsubSel(d){const c=cur();const hw=c.assignments.find(a=>a.date===d);if(!hw){alert('请先保存作业内容');return;}
+  const opts=c.students.map(s=>{const r=hw.records[s.id]||{};const isUn=r.sb!=='√';return `<label style="display:block;margin:4px 0"><input type="checkbox" data-sid="${s.id}" ${isUn?'checked':''}> ${esc(s.name)}</label>`;}).join('');
+  showModal(`<h3>选择未交名单</h3><div style="margin:10px 0;max-height:60vh;overflow:auto">${opts}</div><div style="text-align:right"><button class="btn ghost" onclick="hideModal()">取消</button> <button class="btn" onclick="saveUnsubSel('${d}')">保存</button></div>`);
+}
+function saveUnsubSel(d){const c=cur();const hw=c.assignments.find(a=>a.date===d);if(!hw)return;const checked=[...document.querySelectorAll('#modalBox input[data-sid]:checked')].map(x=>x.dataset.sid);
+  c.students.forEach(s=>{const r=hw.records[s.id]=hw.records[s.id]||{};r.sb=checked.includes(s.id)?'×':'√';});
+  save();hideModal();renderHw();toast('未交名单已更新');}
+function saveHomework(){const c=cur();const d=document.getElementById('hwDate').value||today();const content=document.getElementById('hwContent').value;
+  let hw=c.assignments.find(a=>a.date===d);
+  if(!hw){hw={date:d,content:'',records:{}};c.assignments.push(hw);}
+  hw.content=content;
+  // 新学生自动补空记录
+  c.students.forEach(s=>{if(!(s.id in hw.records))hw.records[s.id]={};});
+  save();renderHw();}
+function cycleSub(d,sid){const c=cur();const hw=c.assignments.find(a=>a.date===d);if(!hw)return;const r=hw.records[sid]||{};r.sb=r.sb==='√'?'×':r.sb==='×'?'△':r.sb==='△'?'√':'√';hw.records[sid]=r;save();renderHw();}
+function cycleQ(d,sid){const c=cur();const hw=c.assignments.find(a=>a.date===d);if(!hw)return;const seq=['⭐','✅','🔵','❌'];const r=hw.records[sid]||{};const idx=seq.indexOf(r.q);r.q=seq[(idx+1)%seq.length];hw.records[sid]=r;save();renderHw();}
+function hwByGroup(){const c=cur();const d=document.getElementById('hwDate').value||today();const hw=c.assignments.find(a=>a.date===d);if(!hw){alert('先登记作业');return;}
+  const box=document.getElementById('hwTableWrap');
+  box.innerHTML=c.groups.map(g=>{const rows=g.mids.map(mid=>{const s=c.students.find(x=>x.id===mid);if(!s)return '';const r=hw.records[mid]||{};return `<tr><td>${esc(s.name)}</td><td>${r.sb==='√'?'<span class="tag green">√</span>':r.sb==='×'?'<span class="tag red">×</span>':r.sb==='△'?'<span class="tag yellow">△</span>':'—'}</td><td>${r.q||'—'}</td></tr>`;}).join('');
+    return `<div style="margin-bottom:10px;border-left:4px solid ${g.color};padding-left:8px"><b>${esc(g.name)}</b></div><table><tr><th>姓名</th><th>提交</th><th>质量</th></tr>${rows}</table>`;}).join('');
+  box.innerHTML+=`<button class="btn sm ghost" onclick="renderHw()">返回全班视图</button>`;
+}
+function renderHwChart(){const c=cur();const box=document.getElementById('hwStatChart');
+  const recent=c.assignments.slice(-7).reverse();
+  if(!recent.length){box.innerHTML='<div style="color:var(--mut)">暂无数据</div>';return;}
+  let html='<div class="bar-chart">';
+  recent.forEach(a=>{
+    const cnt={'√':0,'×':0,'△':0};c.students.forEach(s=>{const r=a.records[s.id];if(r&&r.sb&&r.sb in cnt)cnt[r.sb]++;});
+    const total=Math.max(1,c.students.length);
+    const done=cnt['√']+cnt['△'];
+    html+=`<div class="bar-col"><div class="v" style="--h:${Math.max(4,done/total*120)}px;background:var(--grn)">${done}</div><div>${esc(a.date.slice(5))}</div><div style="font-size:10px;color:var(--red)">×${cnt['×']}</div></div>`;
+  });
+  html+='</div><div style="font-size:12px;color:var(--mut)">近7天：绿色=已交/未完成（到校完成），红字=未交人数</div>';
+  box.innerHTML=html;
+}
+function renderHwStuSel(){const c=cur();const sel=document.getElementById('hwStuSel');sel.innerHTML='';c.students.forEach(s=>{const o=document.createElement('option');o.value=s.id;o.textContent=s.name;sel.appendChild(o);});renderHwStuChart();}
+function renderHwStuChart(){const c=cur();const sid=document.getElementById('hwStuSel').value;const box=document.getElementById('hwStuChart');const st=c.students.find(s=>s.id===sid);if(!st){box.innerHTML='';return;}
+  const recent=c.assignments.slice(-14).reverse();
+  if(!recent.length){box.innerHTML='<div style="color:var(--mut)">暂无数据</div>';return;}
+  let html='<div class="bar-chart">';
+  recent.forEach(a=>{const r=a.records[sid]||{};const sb=r.sb||'—';const color=sb==='√'?'var(--grn)':sb==='×'?'var(--red)':sb==='△'?'var(--yel)':'var(--bor)';
+    html+=`<div class="bar-col"><div class="v" style="--h:40px;background:${color}">${sb==='—'?'·':sb}</div><div>${esc(a.date.slice(5))}</div>${r.q?`<div style="font-size:10px">${r.q}</div>`:''}</div>`;});
+  html+='</div><div style="font-size:12px;color:var(--mut)">'+(st?esc(st.name):'')+' 近14天提交与质量</div>';
+  box.innerHTML=html;
+}
+function exportHw(){const c=cur();const d=document.getElementById('hwDate').value||today();const hw=c.assignments.find(a=>a.date===d);if(!hw){alert('今日无作业数据');return;}
+  let csv='学号,姓名,提交,质量\n';c.students.forEach(s=>{const r=hw.records[s.id]||{};csv+=s.no+','+s.name+','+(r.sb||'')+','+(r.q||'')+'\n';});
+  download('作业登记_'+d+'.csv',csv);}
+
+/* ---------- 考勤 ---------- */
+function renderAtt(){const c=cur();const box=document.getElementById('attList');
+  box.innerHTML=c.attendance.slice().reverse().slice(0,7).map(a=>{
+    const n=c.students.length;const cnt={出勤:0,缺勤:0,迟到:0,请假:0};
+    c.students.forEach(s=>{const v=a.records[s.id];if(v)cnt[v]=(cnt[v]||0)+1;});
+    const leaveNames=[];
+    c.students.forEach(s=>{if(a.records[s.id]==='请假')leaveNames.push(s.name+(a.reasons&&a.reasons[s.id]?'（'+a.reasons[s.id]+'）':''));});
+    (a.extra||[]).forEach(x=>{if(x.status==='请假')leaveNames.push(x.name+(x.reason?'（'+x.reason+'）':''));});
+    const tot=n;
+    return `<div style="padding:8px 0;border-bottom:1px solid var(--bor);font-size:13px"><b>${esc(a.date)}</b> 出勤${cnt.出勤||0}/${tot} · 缺勤${cnt.缺勤||0} · 迟到${cnt.迟到||0} · 请假${cnt.请假||0} ${a.note?`<span class="tag yellow">${esc(a.note)}</span>`:''}${leaveNames.length?`<div style="color:var(--red);font-size:12px">请假：${leaveNames.map(esc).join('、')}</div>`:''}</div>`;
+  }).join('')||'<div style="color:var(--mut)">暂无考勤记录，请先导入应到名单再登记</div>';
+}
+function attStatusOpts(v){return ['出勤','迟到','缺勤','请假'].map(o=>`<option ${v===o?'selected':''}>${o}</option>`).join('');}
+function attTypeOpts(v){return ['事假','病假'].map(o=>`<option ${v===o?'selected':''}>${o}</option>`).join('');}
+function getAttRec(d){const c=cur();let att=c.attendance.find(a=>a.date===d);if(!att){att={date:d,records:{},reasons:{},leaveTypes:{},extra:[],note:''};c.attendance.push(att);}if(!att.reasons)att.reasons={};if(!att.leaveTypes)att.leaveTypes={};if(!att.extra)att.extra=[];return att;}
+function openAttend(){const c=cur();const d=document.getElementById('attDate').value||today();document.getElementById('attDate').value=d;
+  const att=getAttRec(d);
+  const stuOpts=c.students.map(s=>`<option value="${esc(s.name)}">`).join('');
+  const regList=c.students.map(s=>{
+    const v=att.records[s.id]||'';if(!v)return '';
+    const lt=att.leaveTypes[s.id]||'';const r=att.reasons[s.id]||'';
+    const tag=v==='迟到'?'yellow':v==='请假'?'blue':v==='缺勤'?'red':'green';
+    return `<div class="att-reg"><span class="tag ${tag}">${v}</span> <b>${esc(s.name)}</b>${v==='请假'?`（${esc(lt)}）`:''}${r?` · ${esc(r)}`:''}<button class="btn sm ghost" onclick="delAttRec('${d}','${s.id}')">✕</button></div>`;
+  }).join('');
+  const extraReg=(att.extra||[]).map((x,i)=>{
+    const tag=x.status==='迟到'?'yellow':x.status==='请假'?'blue':x.status==='缺勤'?'red':'green';
+    return `<div class="att-reg"><span class="tag ${tag}">${x.status}</span> <b>${esc(x.name)}</b>${x.status==='请假'?`（${esc(x.type||'')}）`:''}${x.reason?` · ${esc(x.reason)}`:''}<button class="btn sm ghost" onclick="delAttExtra('${d}',${i})">✕</button></div>`;
+  }).join('');
+  const emptyHint=regList||extraReg?'':'<div class="muted-sm" style="padding:4px 0">暂无登记，可在下方逐个登记</div>';
+  showModal(`<h3>考勤登记 · ${d}</h3>
+    <div style="margin:10px 0;display:flex;gap:8px;flex-wrap:wrap;align-items:center"><button class="btn" onclick="markAllInModal('${d}')">✅ 一键全部已到</button><span class="muted-sm">应到 ${c.students.length} 人 · 全部已到时只登记异常学生即可</span></div>
+    <div class="att-flow">
+      <div class="att-step"><span class="step-no">1</span><span class="step-lab">写名字</span><input id="attName" list="attStuList" placeholder="输入或选择学生姓名" style="flex:1;min-width:120px"><datalist id="attStuList">${stuOpts}</datalist></div>
+      <div class="att-step"><span class="step-no">2</span><span class="step-lab">选状态</span><div class="seg" id="attSeg"></div></div>
+      <div class="att-step" id="attTypeStep" style="display:none"><span class="step-no">3</span><span class="step-lab">请假类型</span><div class="seg" id="attTypeSeg"></div></div>
+      <div class="att-step"><span class="step-no">4</span><span class="step-lab">情况说明</span><input id="attReason" placeholder="如：发烧、家中有事（可不填）" style="flex:1;min-width:120px"></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn" onclick="attAddOne('${d}')">＋ 加入登记</button></div>
+    </div>
+    <div style="margin:12px 0 6px;font-size:13px;font-weight:600">今日登记明细</div>
+    <div id="attRegList" style="max-height:210px;overflow:auto">${regList}${extraReg}${emptyHint}</div>
+    <div style="margin:10px 0">备注：<input id="attNote" style="width:100%" value="${esc(att.note||'')}" placeholder="其他补充说明"></div>
+    <div style="text-align:right;margin-top:12px"><button class="btn" onclick="saveAtt('${d}')">保存</button> <button class="btn ghost" onclick="hideModal()">关闭</button></div>`);
+  renderAttSeg();
+}
+let _attStatus='迟到',_attType='事假';
+function renderAttSeg(){
+  const st=['迟到','请假','缺勤','出勤'];
+  document.getElementById('attSeg').innerHTML=st.map(s=>`<button class="seg-btn ${s==='迟到'?'hot':''} ${s===_attStatus?'on':''}" onclick="pickAttStatus('${s}')">${s}</button>`).join('');
+  renderAttTypeSeg();
+}
+function pickAttStatus(s){_attStatus=s;renderAttSeg();const ts=document.getElementById('attTypeStep');ts.style.display=(s==='请假')?'flex':'none';}
+function renderAttTypeSeg(){document.getElementById('attTypeSeg').innerHTML=['事假','病假'].map(t=>`<button class="seg-btn ${t===_attType?'on':''}" onclick="pickAttType('${t}')">${t}</button>`).join('');}
+function pickAttType(t){_attType=t;renderAttTypeSeg();}
+function attAddOne(d){
+  const nm=document.getElementById('attName').value.trim();
+  if(!nm){toast('请先写名字');return;}
+  const c=cur();const att=getAttRec(d);
+  const reason=document.getElementById('attReason').value.trim();
+  const st=_attStatus;
+  const stu=c.students.find(s=>s.name===nm);
+  if(stu){
+    att.records[stu.id]=st;
+    att.leaveTypes[stu.id]=(st==='请假')?_attType:'';
+    att.reasons[stu.id]=reason;
+  }else{
+    let ex=att.extra.find(x=>x.name===nm);
+    if(!ex){ex={name:nm,status:st,type:_attType,reason:''};att.extra.push(ex);}
+    else{ex.status=st;ex.type=_attType;ex.reason=reason;}
+  }
+  save();
+  document.getElementById('attName').value='';document.getElementById('attReason').value='';
+  openAttend();toast('已登记 '+nm+'：'+st+(st==='请假'?'（'+_attType+'）':''));
+}
+function delAttRec(d,sid){const att=getAttRec(d);delete att.records[sid];save();openAttend();}
+function delAttExtra(d,i){const att=getAttRec(d);att.extra.splice(i,1);save();openAttend();}
+function setAtt(d,sid,v){const att=getAttRec(d);att.records[sid]=v;save();}
+function setAttType(d,sid,v){const att=getAttRec(d);att.leaveTypes[sid]=v;save();}
+function setAttExtra(d,i,field,v){const att=getAttRec(d);if(field==='reason')att.extra[i].reason=v;else if(field==='status')att.extra[i].status=v;else att.extra[i].type=v;save();}
+function addAttExtra(d){const n=document.getElementById('attNewName').value.trim();if(!n){toast('请先填写姓名');return;}const att=getAttRec(d);att.extra.push({name:n,status:document.getElementById('attNewStatus').value,type:document.getElementById('attNewType').value,reason:document.getElementById('attNewReason').value.trim()});save();openAttend();}
+function markAllInModal(d){const c=cur();const att=getAttRec(d);c.students.forEach(s=>{att.records[s.id]='出勤';});save();openAttend();}
+function saveAtt(d){const c=cur();const att=getAttRec(d);att.note=document.getElementById('attNote').value||'';save();hideModal();renderAtt();renderHome();}
+function setAllAtt(){const c=cur();const d=document.getElementById('attDate').value||today();document.getElementById('attDate').value=d;if(!c.students.length){toast('请先导入应到名单');return;}const att=getAttRec(d);c.students.forEach(s=>{att.records[s.id]='出勤';});save();renderAtt();renderHome();toast(d+' 已全部到齐');}
+async function loadAttFile(e){const f=e.target.files[0];if(!f)return;let rows=[];try{rows=await readTabular(f);}catch(err){toast('导入失败：'+err.message);e.target.value='';return;}
+  const c=cur();let add=0;
+  rows.forEach((r,i)=>{if(i===0&&/学号|序号|姓名|学生/.test(String(r[1]||'')))return;const no=String(r[0]||'').trim();const nm=String(r[1]||r[0]||'').trim();if(!nm)return;if(c.students.some(s=>s.name===nm))return;c.students.push({id:'s'+Date.now()+Math.random().toString(36).slice(2,6),no:no||String(c.students.length+1),name:nm,sex:''});add++;});
+  save();e.target.value='';renderStudents();renderSeats();renderAtt();renderHome();toast('已导入 '+add+' 名学生，共应到 '+c.students.length+' 人');
+}
+function xlsBlob(html){return '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="utf-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Sheet1</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head><body>'+html+'</body></html>';}
+function exportAtt(){const c=cur();if(!c.attendance.length){toast('暂无考勤记录可导出');return;}
+  let h='<table border="1"><tr><th>日期</th><th>学号</th><th>姓名</th><th>状态</th><th>请假类型</th><th>请假原因</th></tr>';
+  c.attendance.forEach(a=>{c.students.forEach(s=>{const v=a.records[s.id];if(v)h+=`<tr><td>${esc(a.date)}</td><td>${esc(s.no)}</td><td>${esc(s.name)}</td><td>${v}</td><td>${(a.leaveTypes&&a.leaveTypes[s.id])||''}</td><td>${(a.reasons&&a.reasons[s.id])||''}</td></tr>`;});(a.extra||[]).forEach(x=>h+=`<tr><td>${esc(a.date)}</td><td></td><td>${esc(x.name)}</td><td>${x.status}</td><td>${x.type||''}</td><td>${esc(x.reason||'')}</td></tr>`);});
+  h+='</table>';download('考勤记录.xls',xlsBlob(h),'application/vnd.ms-excel');toast('考勤已导出，可用 Excel 打开');}
+function exportAll(){const c=cur();let h='';
+  h+='<h3>学生名单</h3><table border="1"><tr><th>学号</th><th>姓名</th><th>性别</th></tr>'+c.students.map(s=>`<tr><td>${esc(s.no)}</td><td>${esc(s.name)}</td><td>${esc(s.sex||'')}</td></tr>`).join('')+'</table>';
+  if(c.groups.length){h+='<h3>小组</h3><table border="1"><tr><th>组号</th><th>组名</th><th>组长</th><th>组员</th></tr>'+c.groups.map(g=>`<tr><td>${esc(g.no||'')}</td><td>${esc(g.name||'')}</td><td>${esc(g.leader||'')}</td><td>${esc((g.members||[]).join('、'))}</td></tr>`).join('')+'</table>';}
+  if(c.duty.length){h+='<h3>卫生安排</h3><table border="1"><tr><th>组</th><th>区域</th><th>学生</th></tr>'+c.duty.map(x=>`<tr><td>${esc(x.group||x.day||'')}</td><td>${esc(x.area||'')}</td><td>${esc(x.names||'')}</td></tr>`).join('')+'</table>';}
+  if(c.attendance.length){h+='<h3>考勤记录</h3><table border="1"><tr><th>日期</th><th>学号</th><th>姓名</th><th>状态</th><th>请假类型</th><th>请假原因</th></tr>';
+    c.attendance.forEach(a=>{c.students.forEach(s=>{const v=a.records[s.id];if(v)h+=`<tr><td>${esc(a.date)}</td><td>${esc(s.no)}</td><td>${esc(s.name)}</td><td>${v}</td><td>${(a.leaveTypes&&a.leaveTypes[s.id])||''}</td><td>${(a.reasons&&a.reasons[s.id])||''}</td></tr>`;});(a.extra||[]).forEach(x=>h+=`<tr><td>${esc(a.date)}</td><td></td><td>${esc(x.name)}</td><td>${x.status}</td><td>${x.type||''}</td><td>${esc(x.reason||'')}</td></tr>`);});
+    h+='</table>';}
+  if(c.assignments.length){h+='<h3>作业登记</h3><table border="1"><tr><th>日期</th><th>作业</th><th>未交/未完成</th></tr>'+c.assignments.map(a=>{const w=[];c.students.forEach(s=>{const r=a.records[s.id];if(!r||r.sb==='×')w.push(s.name);});return `<tr><td>${esc(a.date)}</td><td>${esc(a.content||'')}</td><td>${esc(w.join('、'))}</td></tr>`;}).join('')+'</table>';}
+  if(c.rewards.length){h+='<h3>奖惩记录</h3><table border="1"><tr><th>日期</th><th>姓名</th><th>类型</th><th>分值</th><th>事由</th></tr>'+c.rewards.map(r=>`<tr><td>${esc(r.date||'')}</td><td>${esc(r.name||'')}</td><td>${esc(r.type||'')}</td><td>${r.score!=null?r.score:''}</td><td>${esc(r.note||'')}</td></tr>`).join('')+'</table>';}
+  const e=c.exams[c.exams.length-1];if(e){const subs=e.subjects||[];h+='<h3>成绩 - '+esc(e.name)+'</h3><table border="1"><tr><th>学号</th><th>姓名</th>'+subs.map(x=>`<th>${esc(x)}</th>`).join('')+'<th>总分</th></tr>'+c.students.map(s=>{const r=e.records[s.id]||{};const has=subs.some(x=>r[x]!=null&&r[x]!=='');return `<tr><td>${esc(s.no)}</td><td>${esc(s.name)}</td>${subs.map(x=>`<td>${r[x]??''}</td>`).join('')}<td>${has?subs.reduce((a,x)=>a+(Number(r[x])||0),0):''}</td></tr>`;}).join('')+'</table>';}
+  h+='<h3>课表</h3><table border="1"><tr><th>节次</th><th>时间</th><th>周一</th><th>周二</th><th>周三</th><th>周四</th><th>周五</th></tr>';
+  const days=['Mon','Tue','Wed','Thu','Fri'];const cn=['周一','周二','周三','周四','周五'];const sch=c.schedule||{Mon:[],Tue:[],Wed:[],Thu:[],Fri:[]};
+  const srows=Array.isArray(sch.rows)?sch.rows:Array.from({length:7},(_,i)=>({name:'第'+(i+1)+'节',time:''}));
+  srows.forEach((r,i)=>{h+=`<tr><td>${esc(r.name||'第'+(i+1)+'节')}</td><td>${esc(r.time||'')}</td>${days.map(d=>`<td>${esc((sch.grid?sch.grid[d]:sch[d])[i]||'')}</td>`).join('')}</tr>`;});
+  h+='</table>';
+  download('教师工作台全部数据.xls',xlsBlob(h),'application/vnd.ms-excel');toast('全部数据已导出，可用 Excel 打开');}
+
+/* ---------- 今日事项 ---------- */
+function renderTodos(){const c=cur();const d=today();let td=c.todos.find(t=>t.date===d);if(!td)td={date:d,items:[]};
+  document.getElementById('todoList').innerHTML=td.items.map((it,i)=>todoItemHTML(it,i,d)).join('')||'<div style="color:var(--mut)">今日暂无事项</div>';
+}
+function addTodo(){const c=cur();const d=today();const v=document.getElementById('todoText').value;if(!v)return;let td=c.todos.find(t=>t.date===d);if(!td){td={date:d,items:[]};c.todos.push(td);}td.items.push({t:v,done:false,tag:''});document.getElementById('todoText').value='';save();renderTodos();renderHome();}
+function delTodo(i){const c=cur();const d=today();const td=c.todos.find(t=>t.date===d);if(td){td.items.splice(i,1);save();renderTodos();renderHome();}}
+
+/* ---------- 通讯录 ---------- */
+function renderContacts(){const c=cur();const box=document.getElementById('contactList');
+  box.innerHTML='<div style="font-weight:600;margin-bottom:6px">📇 通讯录</div><table><tr><th>学生</th><th>关系</th><th>联系人</th><th>电话</th><th>操作</th></tr>'+c.contacts.map((ct,i)=>`<tr><td>${esc(ct.stu)}</td><td>${esc(ct.rel)}</td><td>${esc(ct.name)}</td><td><a href="tel:${ct.phone}">${esc(ct.phone)}</a></td><td><button class="btn sm ghost" onclick="copyText('${ct.phone}')">复制</button> <button class="btn sm ghost" onclick="delContact(${i})">删</button></td></tr>`).join('')+'</table>';
+}
+function copyText(t){if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(()=>alert('已复制')).catch(()=>showModal(`<h3>手动复制</h3><div style="margin:10px 0"><textarea rows="4" style="width:100%">${esc(t)}</textarea></div><div style="text-align:right"><button class="btn" onclick="hideModal()">关闭</button></div>`));}else showModal(`<h3>手动复制</h3><div style="margin:10px 0"><textarea rows="4" style="width:100%">${esc(t)}</textarea></div><div style="text-align:right"><button class="btn" onclick="hideModal()">关闭</button></div>`);}
+function addContact(){showModal(`<h3>添加联系人</h3><div style="margin:10px 0">学生：<input id="ctStu" placeholder="学生姓名"><br><br>关系：<input id="ctRel" placeholder="父亲/母亲/爷爷..."><br><br>联系人姓名：<input id="ctName"><br><br>电话：<input id="ctPhone"><br><br><div style="text-align:right"><button class="btn ghost" onclick="hideModal()">取消</button> <button class="btn" onclick="saveContact()">保存</button></div></div>`);}
+function saveContact(){const c=cur();c.contacts.push({stu:document.getElementById('ctStu').value,rel:document.getElementById('ctRel').value,name:document.getElementById('ctName').value,phone:document.getElementById('ctPhone').value});save();hideModal();renderContacts();}
+function delContact(i){confirmBox('确认删除该联系人？',()=>{cur().contacts.splice(i,1);save();renderContacts();});}
+async function loadContactFile(e){const f=e.target.files[0];if(!f)return;let rows=[];try{rows=await readTabular(f);}catch(err){alert('导入失败：'+err.message);e.target.value='';return;}const c=cur();let n=0;
+  rows.forEach(p=>{if(p.length<4||p[0]==='学生')return;c.contacts.push({stu:p[0],rel:p[1],name:p[2],phone:p[3]});n++;});save();renderContacts();alert('已导入 '+n+' 条联系人');e.target.value='';}
+
+/* ---------- 沟通记录 ---------- */
+function renderCommLogs(){const c=cur();const box=document.getElementById('commLogList');
+  box.innerHTML='<div style="font-weight:600;margin-bottom:6px">💬 沟通记录</div>'+c.commLogs.slice().reverse().map((l,i)=>`<div class="note"><div class="date">${esc(l.time)} · 与 ${esc(l.who)} · ${esc(l.way)}</div><div style="margin-top:6px">${esc(l.content)}</div>${l.photo?`<img class="photo" src="${l.photo}">`:''}</div>`).join('')||'<div style="color:var(--mut)">暂无沟通记录</div>';
+}
+function addCommLog(){const c=cur();const opts=c.contacts.map(x=>`<option value="${esc(x.stu)}${esc(x.rel)}-${esc(x.name)}">${esc(x.stu)}·${esc(x.rel)}·${esc(x.name)}</option>`).join('');
+  showModal(`<h3>记录沟通</h3><div style="margin:10px 0">沟通对象：<input id="clWho" list="clList" placeholder="选择或输入"><datalist id="clList">${opts}</datalist><br><br>沟通方式：<select id="clWay"><option>电话</option><option>微信</option><option>面谈</option><option>家访</option><option>其他</option></select><br><br>内容：<textarea id="clContent"></textarea><br><br>照片：<input type="file" id="clPhoto" accept="image/*" onchange="previewPhoto(this)"><div id="clPhotoPrev"></div><br><div style="text-align:right"><button class="btn ghost" onclick="hideModal()">取消</button> <button class="btn" onclick="saveCommLog()">保存</button></div></div>`);
+}
+let clPhotoData='';
+function compressImg(file,cb){const r=new FileReader();r.onload=ev=>{const img=new Image();img.onload=()=>{const max=900;let w=img.width,h=img.height;if(w>max||h>max){if(w>h){h=Math.round(h*max/w);w=max;}else{w=Math.round(w*max/h);h=max;}}const cv=document.createElement('canvas');cv.width=w;cv.height=h;cv.getContext('2d').drawImage(img,0,0,w,h);cb(cv.toDataURL('image/jpeg',0.72));};img.onerror=()=>{cb(r.result);};img.src=ev.target.result;};r.readAsDataURL(file);}
+function previewPhoto(inp){const f=inp.files[0];if(!f)return;compressImg(f,data=>{clPhotoData=data;document.getElementById('clPhotoPrev').innerHTML=`<img class="photo" src="${clPhotoData}">`;});}
+function saveCommLog(){const c=cur();const d=new Date();const ts=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');c.commLogs.push({time:ts,who:document.getElementById('clWho').value,way:document.getElementById('clWay').value,content:document.getElementById('clContent').value,photo:clPhotoData||''});clPhotoData='';save();hideModal();renderCommLogs();}
+
+/* ---------- 课表 ---------- */
+function schedInit(c){if(!c.schedule)c.schedule={Mon:[],Tue:[],Wed:[],Thu:[],Fri:[]};const s=c.schedule;if(!s.rows)s.rows=Array.from({length:7},(_,i)=>({name:'第'+(i+1)+'节',time:''}));if(!s.grid){s.grid={Mon:[],Tue:[],Wed:[],Thu:[],Fri:[]};const days=['Mon','Tue','Wed','Thu','Fri'];days.forEach(d=>{s.grid[d]=Array.isArray(s[d])?s[d]:[];});}return s;}
+function renderSchedule(){const c=cur();const box=document.getElementById('scheduleView');const s=schedInit(c);
+  const days=['Mon','Tue','Wed','Thu','Fri'];const cn=['周一','周二','周三','周四','周五'];
+  box.innerHTML='<table class="schedule-table"><tr><th>节次</th><th>时间</th>'+cn.map(d=>`<th>${d}</th>`).join('')+'</tr>'+s.rows.map((r,i)=>`<tr><td>${esc(r.name||'第'+(i+1)+'节')}</td><td>${esc(r.time||'')}</td>${days.map(d=>`<td>${esc(s.grid[d][i]||'')}</td>`).join('')}</tr>`).join('')+'</table>';
+}
+function openSchedule(){const c=cur();const s=schedInit(c);const days=['Mon','Tue','Wed','Thu','Fri'];const cn=['周一','周二','周三','周四','周五'];
+  let h='<h3>编辑课表</h3><div style="font-size:12px;color:var(--mut);margin-bottom:6px">先设置节次与时间，再按天填科目（每行一节课，行数对应节次数）</div>';
+  h+='<div style="font-size:13px;font-weight:600">节次与时间</div><div id="schedRows">'+s.rows.map((r,i)=>`<div style="display:flex;gap:4px;margin:4px 0"><input id="srow_${i}" value="${esc(r.name)}" placeholder="节次名" style="width:76px"><input id="stime_${i}" value="${esc(r.time)}" placeholder="时间" style="flex:1"><button class="btn sm ghost" onclick="delSchedRow(${i})">删</button></div>`).join('')+'</div>';
+  h+='<div style="margin:4px 0"><button class="btn sm ghost" onclick="addSchedRow()">+ 添加节次</button></div>';
+  days.forEach((d,di)=>{h+=`<div style="margin:8px 0"><b>${cn[di]}</b><br><textarea id="sched-${d}" rows="${Math.max(3,s.rows.length)}" style="width:100%">${s.grid[d].join('\n')}</textarea></div>`;});
+  showModal(h+'<div style="text-align:right"><button class="btn" onclick="saveSchedule()">保存</button></div>');
+}
+function addSchedRow(){const c=cur();const s=schedInit(c);s.rows.push({name:'第'+(s.rows.length+1)+'节',time:''});openSchedule();}
+function delSchedRow(i){const c=cur();const s=schedInit(c);s.rows.splice(i,1);const days=['Mon','Tue','Wed','Thu','Fri'];days.forEach(d=>{s.grid[d].splice(i,1);});openSchedule();}
+function saveSchedule(){const c=cur();const s=schedInit(c);const days=['Mon','Tue','Wed','Thu','Fri'];
+  s.rows=s.rows.map((r,i)=>({name:document.getElementById('srow_'+i).value.trim()||'第'+(i+1)+'节',time:document.getElementById('stime_'+i).value.trim()}));
+  days.forEach(d=>{s.grid[d]=document.getElementById('sched-'+d).value.split(/\n/).map(x=>x.trim()).filter(Boolean);});
+  save();hideModal();renderSchedule();renderHome();}
+function openTodaySched(key){const c=cur();const s=schedInit(c);const cn={Mon:'周一',Tue:'周二',Wed:'周三',Thu:'周四',Fri:'周五'}[key]||key;
+  const curArr=s.grid[key]||[];
+  let h=`<h3>修改今日课表 · ${cn}</h3><div style="font-size:12px;color:var(--mut);margin-bottom:6px">当天快速调整，完整课表在“班务日志-课表”里改</div>`;
+  s.rows.forEach((r,i)=>{h+=`<div style="display:flex;gap:4px;margin:4px 0;align-items:center"><span style="width:76px;font-size:13px">${esc(r.name||'第'+(i+1)+'节')}</span><span style="width:86px;font-size:12px;color:var(--mut)">${esc(r.time||'')}</span><input id="todS_${i}" value="${esc(curArr[i]||'')}" placeholder="科目" style="flex:1"></div>`;});
+  showModal(h+'<div style="text-align:right;margin-top:8px"><button class="btn" onclick="saveTodaySched(\''+key+'\')">保存</button> <button class="btn ghost" onclick="hideModal()">取消</button></div>');
+}
+function saveTodaySched(key){const c=cur();const s=schedInit(c);const arr=[];s.rows.forEach((r,i)=>{const v=document.getElementById('todS_'+i).value.trim();if(v)arr.push(v);});s.grid[key]=arr;save();hideModal();renderSchedule();renderHome();}
+
+/* ---------- 工作留痕 ---------- */
+function renderWorkLogs(){const c=cur();const box=document.getElementById('workLogList');
+  box.innerHTML=c.workLogs.slice().reverse().map((l,i)=>`<div class="note"><div class="date">${esc(l.date)}</div><div style="margin-top:6px">${esc(l.text)}</div>${l.photo?`<img class="photo" src="${l.photo}">`:''}</div>`).join('')||'<div style="color:var(--mut)">暂无记录</div>';
+}
+function addWorkLog(){const c=cur();const v=document.getElementById('logText').value;showModal(`<h3>记录工作</h3><div style="margin:10px 0"><textarea id="wlText" placeholder="记录今日工作">${esc(v)}</textarea><br><br>照片：<input type="file" id="wlPhoto" accept="image/*" onchange="previewWl(this)"><div id="wlPrev"></div><br><div style="text-align:right"><button class="btn" onclick="saveWorkLog()">保存</button></div></div>`);}
+let wlPhotoData='';
+function previewWl(inp){const f=inp.files[0];if(!f)return;compressImg(f,data=>{wlPhotoData=data;document.getElementById('wlPrev').innerHTML=`<img class="photo" src="${wlPhotoData}">`;});}
+function saveWorkLog(){const c=cur();const v=document.getElementById('wlText').value;if(!v){hideModal();return;}c.workLogs.push({date:today(),text:v,photo:wlPhotoData||''});wlPhotoData='';save();hideModal();renderWorkLogs();}
+
+/* ========== 数据备份 / 恢复 ========== */
+function backupData(){
+  const json=JSON.stringify(S,null,2);
+  try{const blob=new Blob([json],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='教师工作台备份_'+today()+'.json';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000);}catch(e){}
+  showModal(`<h3>备份完成</h3><div style="margin:10px 0;color:var(--mut);font-size:13px">备份会把全部数据（班级、学生、成绩、作业等）打包成 JSON 文件，请保存到安全位置（手机相册/网盘/文件管理）。之后换设备、换浏览器或误操作时，用顶部「恢复」按钮选择该文件即可还原。<br><br>如果手机上没有自动下载，可点下面按钮复制备份内容，粘贴保存到备忘录。</div><div style="text-align:right"><button class="btn ghost" onclick="copyBackupText()">复制备份内容</button> <button class="btn" onclick="hideModal()">关闭</button></div>`);
+  window._backupJson=json;
+}
+function copyBackupText(){
+  const t=window._backupJson||'';
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(()=>alert('备份内容已复制，请粘贴到备忘录保存')).catch(()=>showBackupText(t));}else showBackupText(t);
+}
+function showBackupText(t){showModal(`<h3>备份内容</h3><div style="margin:10px 0"><textarea rows="8" readonly style="width:100%;font-size:11px">${esc(t)}</textarea></div><div style="color:var(--mut);font-size:12px;margin-bottom:8px">手机请长按上方内容 → 全选 → 复制，粘贴到备忘录保存。</div><div style="text-align:right"><button class="btn" onclick="hideModal()">关闭</button></div>`);}
+function restoreData(e){const f=e.target.files[0];if(!f)return;confirmBox('恢复备份会用备份文件覆盖当前所有数据（当前数据将丢失，可通过「撤销」找回）。确认继续？',()=>{const r=new FileReader();r.onload=ev=>{try{const d=JSON.parse(ev.target.result);if(!d.classes||!d.cur)throw 0;S=d;save();refreshClassUI();renderAll();alert('恢复成功');}catch(err){alert('备份文件格式不正确');}};r.readAsText(f,'utf-8');});e.target.value='';}
+
+/* ========== 作业批量 / 成绩导出 ========== */
+function allSubmitted(){const c=cur();const d=document.getElementById('hwDate').value||today();const hw=c.assignments.find(a=>a.date===d);if(!hw){alert('请先保存作业内容');return;}c.students.forEach(s=>{const r=hw.records[s.id]=hw.records[s.id]||{};r.sb='√';});save();renderHw();}
+function exportScores(){const c=cur();const e=c.exams[c.exams.length-1];if(!e){alert('暂无成绩可导出');return;}const subs=e.subjects||[];let csv='学号,姓名,'+subs.join(',')+',总分\n';c.students.forEach(s=>{const r=e.records[s.id]||{};const hasScore=subs.some(x=>r[x]!=null&&r[x]!=='');csv+=[s.no,s.name,...subs.map(x=>r[x]??''),hasScore?subs.reduce((a,x)=>a+(Number(r[x])||0),0):''].join(',')+'\n';});download('成绩_'+e.name+'.csv',csv);}
+
+/* ========== 多标签页同步 ========== */
+window.addEventListener('storage',e=>{if(e.key===LS_KEY&&e.newValue){try{S=JSON.parse(e.newValue);refreshClassUI();renderAll();}catch(_){}}});
+
+/* ========== 初始化 ========== */
+refreshClassUI();renderAll();initFold();
+</script>
+</body>
+</html>
