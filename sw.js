@@ -1,5 +1,5 @@
 /* 教师工作台 Service Worker：离线缓存 + 静默更新 */
-const CACHE = 'tw-v3';
+const CACHE = 'tw-v4';
 const ASSETS = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', (e) => {
