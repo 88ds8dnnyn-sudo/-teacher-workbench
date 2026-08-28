@@ -274,6 +274,8 @@ if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch
           <button class="btn sm ghost" onclick="undoSeat()">撤销</button>
           <button class="btn sm ghost" onclick="autoSeat('random')">随机排</button>
           <button class="btn sm ghost" onclick="autoSeat('height')">按身高模式</button>
+          <button class="btn sm ghost" onclick="toggleSeatFlip()">↻ 倒置</button>
+          <button class="btn sm ghost" onclick="exportSeat()">导出座位</button>
           <button class="btn sm" onclick="saveSeats()">保存</button>
         </div>
         <div class="import-hint">拖动学生名字到座位格；"按身高模式"按身高排座（前排矮后排高）；导入文件含身高列时座位格会显示身高；双击座位格可移除学生</div>
@@ -337,6 +339,13 @@ if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch
         </div>
         <div id="examList"></div>
         <div id="aiResult"></div>
+      </div>
+      <div class="grid g2">
+        <div class="card"><h3><span class="ico">📈</span>班级整体趋势</h3><div id="scoreTrendChart"></div></div>
+        <div class="card"><h3><span class="ico">👤</span>单个学生成绩分析</h3>
+          <div class="toolbar"><select id="scoreStuSel" onchange="renderScoreStuChart()"></select></div>
+          <div id="scoreStuChart"></div>
+        </div>
       </div>
     </section>
 
@@ -441,7 +450,7 @@ function undoLast(){
     try{S=JSON.parse(p);localStorage.removeItem('tWorkbench_prev');save();refreshClassUI();renderAll();alert('已撤销到上一步');}catch(e){alert('撤销失败：数据不完整');}
   });
 }
-function newClassData(name){return {name,students:[],groups:[],seats:{rows:6,cols:6,grid:[]},convention:{text:'',rules:[]},cadres:[],duty:[],attendance:[],assignments:[],exams:[],rewards:[],contacts:[],commLogs:[],todos:[],schedule:{Mon:[],Tue:[],Wed:[],Thu:[],Fri:[]},workLogs:[]}}
+function newClassData(name){return {name,students:[],groups:[],seats:{rows:6,cols:6,grid:[],flip:false},convention:{text:'',rules:[]},cadres:[],duty:[],attendance:[],assignments:[],exams:[],rewards:[],contacts:[],commLogs:[],todos:[],schedule:{Mon:[],Tue:[],Wed:[],Thu:[],Fri:[]},workLogs:[]}}
 function cur(){return S.classes[S.cur]}
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
 function today(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
@@ -730,17 +739,30 @@ function renderSeats(){
   const c=cur();const r=Math.max(1,Math.min(12,parseInt(document.getElementById('seatRows').value)||6));const co=Math.max(1,Math.min(12,parseInt(document.getElementById('seatCols').value)||6));
   c.seats.rows=r;c.seats.cols=co;save();
   const g=c.seats.grid;while(g.length<r*co)g.push(null);
+  const flip=!!c.seats.flip;
+  const idxs=[];if(!flip){for(let i=0;i<r*co;i++)idxs.push(i);}else{for(let i=0;i<r;i++){for(let j=0;j<co;j++)idxs.push((r-1-i)*co+j);}}
   const box=document.getElementById('seatBox');
-  box.innerHTML=`<div class="seat-wrap"><div class="seat-main"><div class="seat-stage">讲 台</div><div class="seat-grid" style="grid-template-columns:repeat(${co},1fr)">${g.slice(0,r*co).map((sid,i)=>{
-    const st=c.students.find(s=>s.id===sid);
+  const gridHtml=`<div class="seat-grid" style="grid-template-columns:repeat(${co},1fr)">${idxs.map(i=>{
+    const st=c.students.find(s=>s.id===g[i]);
     if(st){const hl=selSeat===st.id?' border:2px solid var(--pri);background:#eaf0fe':'';
       const h=fmtH(st.height);
       return `<div class="seat" style="${h?'flex-direction:column;':''}${hl}" draggable="true" id="seat-${i}" ondragstart="dragSeat(event,'${st.id}')" ondragover="event.preventDefault()" ondrop="dropSeat(event,${i})" onclick="seatTap(${i})" ondblclick="clearSeat(${i})" title="点击选中/移动，双击移除">${h?`<div class="seat-name">${esc(st.name)}</div><div class="seat-h">${esc(h)}</div>`:`<div class="seat-name">${esc(st.name)}</div>`}</div>`;}
     return `<div class="seat empty"${selSeat?' style="cursor:pointer"':''} draggable="true" ondragover="event.preventDefault()" ondrop="dropSeat(event,${i})" onclick="seatTap(${i})">${selSeat?'放入':'空'}</div>`;
-  }).join('')}</div></div><div class="seat-door">门</div></div>`;
+  }).join('')}</div>`;
+  const stageHtml='<div class="seat-stage">讲 台</div>';
+  const doorHtml='<div class="seat-door">门</div>';
+  box.innerHTML=flip
+    ? `<div class="seat-wrap">${doorHtml}<div class="seat-main">${gridHtml}${stageHtml}</div></div>`
+    : `<div class="seat-wrap"><div class="seat-main">${stageHtml}${gridHtml}</div>${doorHtml}</div>`;
   const pool=c.students.filter(s=>!g.includes(s.id));
   box.innerHTML+=`<div style="margin-top:12px;border-top:1px dashed var(--bor);padding-top:10px"><div style="font-size:12px;color:var(--mut);margin-bottom:6px">未入座学生：点击选中再点座位格放入（手机也能用），或电脑上直接拖动</div><div id="seatPool">${pool.map(s=>`<span class="stu-pill" style="${selSeat===s.id?'background:var(--pri);color:#fff':''};cursor:pointer" draggable="true" ondragstart="dragSeat(event,'${s.id}')" onclick="pickSeat('${s.id}')">${esc(s.name)}</span>`).join('')||'<span style="color:var(--mut)">全部已入座</span>'}</div></div>`;
 }
+function toggleSeatFlip(){const c=cur();c.seats.flip=!c.seats.flip;save();renderSeats();toast(c.seats.flip?'已倒置：从教室后面视角（门在左侧、讲台在下）':'已恢复正常视角（门在右侧、讲台在上）');}
+function exportSeat(){const c=cur();const r=c.seats.rows||6,co=c.seats.cols||6;const g=c.seats.grid;const flip=!!c.seats.flip;
+  let rowsHtml='';for(let i=0;i<r;i++){const ri=flip?(r-1-i):i;let tds='';for(let j=0;j<co;j++){const st=c.students.find(s=>s.id===g[ri*co+j]);tds+=`<td>${st?esc(st.name)+(st.height?'（'+esc(fmtH(st.height))+'）':''):''}</td>`;}rowsHtml+=`<tr>${tds}</tr>`;}
+  const stageRow=`<tr><th colspan="${co}" style="text-align:center">讲台（教室前方）</th></tr>`;
+  const html=`<table>${flip?rowsHtml+stageRow:stageRow+rowsHtml}</table>`;
+  download('座位表_'+c.name+'.xls',html,'application/vnd.ms-excel;charset=utf-8');}
 function dragSeat(e,sid){e.dataTransfer.setData('text/plain',sid);}
 function dropSeat(e,i){e.preventDefault();const sid=e.dataTransfer.getData('text/plain');if(!sid)return;pushSeatUndo();const c=cur();const g=c.seats.grid;const old=g.indexOf(sid);if(old>=0)g[old]=null;g[i]=sid;save();renderSeats();}
 function clearSeat(i){pushSeatUndo();const c=cur();c.seats.grid[i]=null;save();renderSeats();}
@@ -876,8 +898,47 @@ function renderExams(){const c=cur();const box=document.getElementById('examList
     return `<div style="margin-bottom:12px"><b>${esc(e.name)}</b>（${esc(e.date)}）<button class="btn sm ghost" onclick="delExam(${ei})">删</button>
     <table><tr><th>姓名</th>${subs.map(s=>`<th>${esc(s)}</th>`).join('')}</tr>${rows}</table></div>`;
   }).join('')||'<div style="color:var(--mut)">暂无成绩，点"+"添加考试或导入文件</div>';
+  renderScoreTrend();renderScoreStuSel();
 }
-function setScore(ei,sid,sub,v){const c=cur();const e=c.exams[ei];e.records[sid]=e.records[sid]||{};e.records[sid][sub]=v===''?null:Number(v);save();}
+/* ---------- 成绩分析：班级整体趋势 ---------- */
+function sortedExams(){const c=cur();return c.exams.slice().sort((a,b)=>(a.date||'')>(b.date||'')?1:(a.date||'')<(b.date||'')?-1:0);}
+function examSubAvg(e){const c=cur();const subs=e.subjects||[];const out={};let tot=0,cnt=0;
+  subs.forEach(sub=>{const vals=c.students.map(s=>(e.records[s.id]||{})[sub]).filter(v=>v!=null&&!isNaN(v));if(!vals.length)return;out[sub]=vals.reduce((a,b)=>a+b,0)/vals.length;tot+=out[sub];cnt++;});
+  out['__avg']=cnt?tot/cnt:0;out['__cnt']=cnt;return out;}
+function renderScoreTrend(){const c=cur();const box=document.getElementById('scoreTrendChart');const es=sortedExams();
+  if(!es.length){box.innerHTML='<div style="color:var(--mut)">暂无考试数据</div>';return;}
+  let html='<div class="bar-chart">';
+  es.forEach(e=>{const a=examSubAvg(e);if(!a.__cnt){html+=`<div class="bar-col"><div class="v" style="--h:4px;background:var(--bor)">·</div><div>${esc((e.name||'').slice(0,4))}</div></div>`;return;}
+    html+=`<div class="bar-col"><div class="v" style="--h:${Math.max(4,a.__avg/100*120)}px;background:var(--pri)">${a.__avg.toFixed(0)}</div><div>${esc(e.name)}</div><div style="font-size:10px">${esc((e.date||'').slice(5))}</div></div>`;});
+  html+='</div><div style="font-size:12px;color:var(--mut)">历次考试班级整体平均分（柱上数字=平均分）</div>';
+  const allSubs=[];es.forEach(e=>(e.subjects||[]).forEach(s=>{if(!allSubs.includes(s))allSubs.push(s);}));
+  html+='<table style="margin-top:8px"><tr><th>考试</th><th>日期</th>'+allSubs.map(s=>`<th>${esc(s)}</th>`).join('')+'</tr>';
+  es.forEach(e=>{const a=examSubAvg(e);html+=`<tr><td>${esc(e.name)}</td><td>${esc(e.date)}</td>`+allSubs.map(s=>`<td>${a[s]!=null?a[s].toFixed(1):'—'}</td>`).join('')+'</tr>';});
+  html+='</table>';
+  box.innerHTML=html;
+}
+/* ---------- 成绩分析：单个学生 ---------- */
+function renderScoreStuSel(){const c=cur();const sel=document.getElementById('scoreStuSel');sel.innerHTML='';c.students.forEach(s=>{const o=document.createElement('option');o.value=s.id;o.textContent=s.name;sel.appendChild(o);});renderScoreStuChart();}
+function renderScoreStuChart(){const c=cur();const sid=document.getElementById('scoreStuSel').value;const box=document.getElementById('scoreStuChart');const st=c.students.find(s=>s.id===sid);if(!st){box.innerHTML='';return;}
+  const es=sortedExams().filter(e=>{const r=e.records[sid]||{};return (e.subjects||[]).some(x=>r[x]!=null);});
+  if(!es.length){box.innerHTML='<div style="color:var(--mut)">'+esc(st.name)+' 暂无成绩记录</div>';return;}
+  let html='<div class="bar-chart">';
+  es.forEach(e=>{const r=e.records[sid]||{};const vals=(e.subjects||[]).map(x=>r[x]).filter(v=>v!=null&&!isNaN(v));const avg=vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:0;
+    html+=`<div class="bar-col"><div class="v" style="--h:${Math.max(4,avg/100*120)}px;background:var(--grn)">${avg.toFixed(0)}</div><div>${esc(e.name)}</div><div style="font-size:10px">${esc((e.date||'').slice(5))}</div></div>`;});
+  html+='</div><div style="font-size:12px;color:var(--mut)">'+esc(st.name)+' 历次考试平均分趋势</div>';
+  html+='<table style="margin-top:8px"><tr><th>考试</th><th>日期</th>';
+  const allSubs=[];es.forEach(e=>(e.subjects||[]).forEach(s=>{if(!allSubs.includes(s))allSubs.push(s);}));
+  allSubs.forEach(s=>html+=`<th>${esc(s)}</th>`);html+='<th>总分</th><th>班级排名</th></tr>';
+  es.forEach(e=>{
+    const r=e.records[sid]||{};const total=allSubs.reduce((a,x)=>a+(r[x]||0),0);
+    const tRank=c.students.filter(st2=>{const rr=e.records[st2.id]||{};return (e.subjects||[]).some(x=>rr[x]!=null);}).map(st2=>(e.subjects||[]).reduce((a,x)=>a+((e.records[st2.id]||{})[x]||0),0)).sort((a,b)=>b-a);
+    const rk=tRank.indexOf(total)+1;
+    html+=`<tr><td>${esc(e.name)}</td><td>${esc(e.date)}</td>`+allSubs.map(x=>`<td>${r[x]!=null?r[x]:'—'}</td>`).join('')+`<td><b>${total}</b></td><td>${rk||'—'}</td></tr>`;
+  });
+  html+='</table>';
+  box.innerHTML=html;
+}
+function setScore(ei,sid,sub,v){const c=cur();const e=c.exams[ei];e.records[sid]=e.records[sid]||{};e.records[sid][sub]=v===''?null:Number(v);save();renderScoreTrend();renderScoreStuChart();}
 function addExam(){showModal(`<h3>添加考试</h3><div style="margin:10px 0">考试名称：<input id="eName" placeholder="如：期中考试"><br><br>日期：<input id="eDate" type="date"><br><br>科目（逗号分隔）：<input id="eSubs" value="语文,数学,英语"><br><br><div style="text-align:right"><button class="btn ghost" onclick="hideModal()">取消</button> <button class="btn" onclick="saveExam()">创建</button></div></div>`);}
 function saveExam(){const c=cur();c.exams.push({name:document.getElementById('eName').value,date:document.getElementById('eDate').value,subjects:document.getElementById('eSubs').value.split(/[,，]/).map(x=>x.trim()).filter(Boolean),records:{}});save();hideModal();renderExams();}
 function delExam(i){confirmBox('删除该考试？',()=>{cur().exams.splice(i,1);save();renderExams();document.getElementById('aiResult').innerHTML='';});}
